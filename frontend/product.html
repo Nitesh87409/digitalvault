@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Product – DigitalVault</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root { --gold: #f5c842; --dark: #0a0a0f; --card: #12121a; --border: rgba(245,200,66,0.15); }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--dark); color: #e8e8f0; }
+    h1,h2,h3 { font-family: 'Syne', sans-serif; }
+    .gold-text { color: var(--gold); }
+    .gold-btn { background: linear-gradient(135deg,#f5c842,#e0a800); color: #0a0a0f; font-family: 'Syne',sans-serif; font-weight: 700; border: none; cursor: pointer; transition: all 0.3s; }
+    .gold-btn:hover { box-shadow: 0 0 30px rgba(245,200,66,0.4); transform: translateY(-2px); }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; }
+    nav { position: sticky; top: 0; z-index: 100; background: rgba(10,10,15,0.9); border-bottom: 1px solid var(--border); backdrop-filter: blur(20px); }
+
+    /* Image Gallery */
+    .main-img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 16px; border: 1px solid var(--border); }
+    .thumb { width: 70px; height: 70px; object-fit: cover; border-radius: 10px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; flex-shrink: 0; }
+    .thumb.active { border-color: var(--gold); }
+    .thumb:hover { border-color: rgba(245,200,66,0.5); }
+    .thumb-placeholder { width: 70px; height: 70px; border-radius: 10px; background: #1a1a2a; border: 2px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; }
+
+    /* Cart notification */
+    .cart-badge { position: absolute; top: -6px; right: -6px; background: #f5c842; color: #0a0a0f; font-size: 10px; font-weight: 700; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+    /* Description rich content */
+    .desc-content h1 { font-size: 1.8em; font-weight: 800; margin-bottom: 10px; }
+    .desc-content h2 { font-size: 1.4em; font-weight: 700; margin-bottom: 8px; }
+    .desc-content h3 { font-size: 1.1em; font-weight: 600; margin-bottom: 6px; }
+    .desc-content ul { padding-left: 20px; list-style: disc; margin-bottom: 10px; }
+    .desc-content ol { padding-left: 20px; list-style: decimal; margin-bottom: 10px; }
+    .desc-content p { margin-bottom: 8px; line-height: 1.7; }
+    .desc-content strong { font-weight: 700; }
+
+    /* Toast */
+    #toast { position: fixed; bottom: 24px; right: 24px; z-index: 999; padding: 14px 20px; border-radius: 12px; font-size: 0.9rem; font-weight: 600; transition: all 0.3s; transform: translateY(100px); opacity: 0; }
+    #toast.show { transform: translateY(0); opacity: 1; }
+
+    @media(max-width:768px) { .main-img { aspect-ratio: 4/3; } }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="px-6 py-4">
+  <div class="max-w-6xl mx-auto flex items-center justify-between">
+    <a href="index.html" class="text-xl font-bold gold-text">DigitalVault</a>
+    <div class="flex items-center gap-4">
+      <a href="index.html" class="text-sm text-gray-400 hover:text-white transition">← Store</a>
+      <a href="cart.html" class="relative text-gray-300 hover:text-white transition">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+        <span id="cart-count" class="cart-badge hidden">0</span>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- LOADING -->
+<div id="loading" class="flex items-center justify-center min-h-screen">
+  <div class="text-center">
+    <div class="w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+    <p class="text-gray-400">Loading product...</p>
+  </div>
+</div>
+
+<!-- PRODUCT DETAIL -->
+<div id="product-page" class="hidden max-w-6xl mx-auto px-6 py-10">
+
+  <!-- Breadcrumb -->
+  <div class="flex items-center gap-2 text-sm text-gray-500 mb-8">
+    <a href="index.html" class="hover:text-yellow-400 transition">Home</a>
+    <span>›</span>
+    <a href="index.html#products" class="hover:text-yellow-400 transition">Products</a>
+    <span>›</span>
+    <span id="breadcrumb-name" class="text-white"></span>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16">
+
+    <!-- LEFT — Image Gallery -->
+    <div>
+      <!-- Main Image -->
+      <div class="relative mb-4">
+        <img id="main-img" src="" alt="Product" class="main-img hidden"/>
+        <div id="main-emoji" class="w-full rounded-xl border flex items-center justify-center text-8xl hidden" style="aspect-ratio:1;border-color:var(--border);background:#12121a;"></div>
+      </div>
+
+      <!-- Thumbnails -->
+      <div id="thumbs" class="flex gap-3 flex-wrap"></div>
+    </div>
+
+    <!-- RIGHT — Product Info -->
+    <div class="flex flex-col">
+      <!-- Badge -->
+      <div id="product-badge" class="inline-block text-xs font-bold px-3 py-1 rounded-full mb-4 w-fit" style="background:linear-gradient(135deg,#f5c842,#e0a800);color:#0a0a0f;font-family:'Syne',sans-serif;letter-spacing:1px;text-transform:uppercase;">Digital Product</div>
+
+      <!-- Name -->
+      <h1 id="product-name" class="text-3xl md:text-4xl font-bold text-white mb-4"></h1>
+
+      <!-- Rating -->
+      <div class="flex items-center gap-2 mb-5">
+        <div class="flex" style="color:#f5c842">★★★★★</div>
+        <span class="text-sm text-gray-400">(4.9) · Instant Download</span>
+      </div>
+
+      <!-- Price -->
+      <div class="flex items-center gap-4 mb-2">
+        <span id="sale-price" class="text-4xl font-bold gold-text"></span>
+        <span id="orig-price" class="text-xl text-gray-500 line-through"></span>
+        <span id="discount-pct" class="text-sm font-bold text-green-400 px-2 py-1 rounded-lg" style="background:rgba(16,185,129,0.1)"></span>
+      </div>
+      <p class="text-green-400 text-sm mb-6">✓ Inclusive of all taxes</p>
+
+      <!-- Highlights -->
+      <div class="grid grid-cols-2 gap-3 mb-6">
+        <div class="flex items-center gap-2 text-sm text-gray-300"><span class="gold-text">⚡</span> Instant Download</div>
+        <div class="flex items-center gap-2 text-sm text-gray-300"><span class="gold-text">♾️</span> Lifetime Access</div>
+        <div class="flex items-center gap-2 text-sm text-gray-300"><span class="gold-text">💰</span> 7-Day Refund</div>
+        <div class="flex items-center gap-2 text-sm text-gray-300"><span class="gold-text">🔒</span> Secure Payment</div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="flex flex-col sm:flex-row gap-3 mb-8">
+        <button onclick="addToCart()" class="flex-1 py-4 rounded-xl text-base font-bold transition" style="background:rgba(245,200,66,0.1);border:2px solid rgba(245,200,66,0.4);color:#f5c842;font-family:'Syne',sans-serif;" onmouseover="this.style.background='rgba(245,200,66,0.2)'" onmouseout="this.style.background='rgba(245,200,66,0.1)'">
+          🛒 Add to Cart
+        </button>
+        <button onclick="buyNow()" class="gold-btn flex-1 py-4 rounded-xl text-base">
+          ⚡ Buy Now
+        </button>
+      </div>
+
+      <!-- Divider -->
+      <div class="border-t mb-6" style="border-color:var(--border)"></div>
+
+      <!-- Short info -->
+      <div class="space-y-3 text-sm text-gray-400">
+        <div class="flex justify-between"><span>Format</span><span class="text-white">Digital Download</span></div>
+        <div class="flex justify-between"><span>Delivery</span><span class="text-white">Instant (Email + Download Page)</span></div>
+        <div class="flex justify-between"><span>Access</span><span class="text-white">Lifetime</span></div>
+        <div class="flex justify-between"><span>Support</span><span class="text-white">Email Support</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DESCRIPTION SECTION -->
+  <div class="mt-14">
+    <div class="border-b mb-8" style="border-color:var(--border)">
+      <button class="pb-4 text-white font-bold border-b-2 mr-8" style="border-color:#f5c842;font-family:'Syne',sans-serif;">Description</button>
+    </div>
+    <div id="product-desc" class="desc-content text-gray-300 leading-relaxed max-w-3xl"></div>
+  </div>
+
+</div>
+
+<!-- PAYMENT MODAL -->
+<div id="pay-modal" class="fixed inset-0 z-50 hidden" style="background:rgba(0,0,0,0.8);backdrop-filter:blur(10px);display:none!important">
+  <div class="flex items-center justify-center min-h-screen px-4">
+    <div class="card w-full max-w-md p-8 relative">
+      <button onclick="closePayModal()" class="absolute top-4 right-4 text-gray-500 hover:text-white text-xl">✕</button>
+      <h3 class="text-xl font-bold text-white mb-6">Complete Your Order</h3>
+      <div class="space-y-4">
+        <div>
+          <label class="text-xs text-gray-400 mb-1 block">Full Name *</label>
+          <input id="pay-name" type="text" placeholder="Your name" class="w-full px-4 py-3 rounded-xl text-white text-sm outline-none" style="background:#1a1a2a;border:1px solid rgba(255,255,255,0.1);color:#fff"/>
+        </div>
+        <div>
+          <label class="text-xs text-gray-400 mb-1 block">Email *</label>
+          <input id="pay-email" type="email" placeholder="your@email.com" class="w-full px-4 py-3 rounded-xl text-sm outline-none" style="background:#1a1a2a;border:1px solid rgba(255,255,255,0.1);color:#fff"/>
+        </div>
+        <div>
+          <label class="text-xs text-gray-400 mb-1 block">Phone *</label>
+          <input id="pay-phone" type="tel" placeholder="10-digit number" maxlength="10" class="w-full px-4 py-3 rounded-xl text-sm outline-none" style="background:#1a1a2a;border:1px solid rgba(255,255,255,0.1);color:#fff"/>
+        </div>
+        <div id="pay-error" class="text-red-400 text-xs hidden"></div>
+        <button onclick="initiatePayment()" class="gold-btn w-full py-4 rounded-xl text-base">Pay ₹<span id="pay-amount">0</span> →</button>
+        <p class="text-gray-600 text-xs text-center">🔒 Secured by Razorpay</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+const API = 'http://localhost:5000';
+let currentProduct = null;
+
+// Get product ID from URL
+const params = new URLSearchParams(window.location.search);
+const productId = params.get('id');
+
+if (!productId) window.location.href = 'index.html';
+
+// Load cart count
+function updateCartCount() {
+  const cart = JSON.parse(localStorage.getItem('dv_cart') || '[]');
+  const count = cart.reduce((s, i) => s + i.qty, 0);
+  const badge = document.getElementById('cart-count');
+  if (count > 0) { badge.textContent = count; badge.classList.remove('hidden'); }
+  else badge.classList.add('hidden');
+}
+
+// Load product
+async function loadProduct() {
+  try {
+    const res = await fetch(`${API}/product/${productId}`);
+    const data = await res.json();
+    if (!data.flag) { window.location.href = 'index.html'; return; }
+    currentProduct = data.product;
+    renderProduct(data.product);
+  } catch(e) {
+    document.getElementById('loading').innerHTML = '<p class="text-red-400">Could not load product. Is server running?</p>';
+  }
+}
+
+const emojis = ['📦','🎨','📈','🚀','💡','⚡'];
+
+function renderProduct(p) {
+  document.title = p.name + ' – DigitalVault';
+  document.getElementById('breadcrumb-name').textContent = p.name;
+  document.getElementById('product-name').textContent = p.name;
+
+  const sale = p.sale_price || 0;
+  const orig = p.original_price || 0;
+  document.getElementById('sale-price').textContent = '₹' + sale.toLocaleString();
+  document.getElementById('orig-price').textContent = orig ? '₹' + orig.toLocaleString() : '';
+  if (orig && sale) {
+    const pct = Math.round((orig - sale) / orig * 100);
+    document.getElementById('discount-pct').textContent = pct + '% OFF';
+  }
+  document.getElementById('pay-amount').textContent = sale.toLocaleString();
+
+  // Description
+  document.getElementById('product-desc').innerHTML = p.description || '<p class="text-gray-500">No description available.</p>';
+
+  // Images
+  const mainImg = document.getElementById('main-img');
+  const mainEmoji = document.getElementById('main-emoji');
+  const thumbsContainer = document.getElementById('thumbs');
+
+  if (p.images && p.images.length > 0) {
+    mainImg.src = API + p.images[0];
+    mainImg.classList.remove('hidden');
+
+    p.images.forEach((img, i) => {
+      const thumb = document.createElement('img');
+      thumb.src = API + img;
+      thumb.className = 'thumb' + (i === 0 ? ' active' : '');
+      thumb.onclick = () => {
+        mainImg.src = API + img;
+        document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+        thumb.classList.add('active');
+      };
+      thumbsContainer.appendChild(thumb);
+    });
+  } else {
+    mainEmoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    mainEmoji.classList.remove('hidden');
+  }
+
+  document.getElementById('loading').classList.add('hidden');
+  document.getElementById('product-page').classList.remove('hidden');
+}
+
+// Add to Cart
+function addToCart() {
+  if (!currentProduct) return;
+  const cart = JSON.parse(localStorage.getItem('dv_cart') || '[]');
+  const existing = cart.find(i => i.id === currentProduct._id);
+  if (existing) {
+    showToast('Already in cart! 🛒', '#f5c842', '#0a0a0f');
+  } else {
+    cart.push({
+      id: currentProduct._id,
+      name: currentProduct.name,
+      price: currentProduct.sale_price,
+      orig_price: currentProduct.original_price,
+      image: currentProduct.images?.[0] || null,
+      qty: 1
+    });
+    localStorage.setItem('dv_cart', JSON.stringify(cart));
+    updateCartCount();
+    showToast('Added to cart! 🎉', '#10b981', '#fff');
+  }
+}
+
+// Buy Now
+function buyNow() {
+  const modal = document.getElementById('pay-modal');
+  modal.style.setProperty('display', 'flex', 'important');
+  modal.classList.remove('hidden');
+}
+function closePayModal() {
+  const modal = document.getElementById('pay-modal');
+  modal.style.setProperty('display', 'none', 'important');
+}
+
+async function initiatePayment() {
+  const name = document.getElementById('pay-name').value.trim();
+  const email = document.getElementById('pay-email').value.trim();
+  const phone = document.getElementById('pay-phone').value.trim();
+  const errEl = document.getElementById('pay-error');
+
+  if (!name || !email || !phone) { errEl.textContent = 'Please fill all fields.'; errEl.classList.remove('hidden'); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errEl.textContent = 'Valid email required.'; errEl.classList.remove('hidden'); return; }
+  if (!/^\d{10}$/.test(phone)) { errEl.textContent = 'Valid 10-digit phone required.'; errEl.classList.remove('hidden'); return; }
+  errEl.classList.add('hidden');
+
+  try {
+    const res = await fetch(`${API}/order/create`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, phone, product_id: currentProduct._id })
+    });
+    const data = await res.json();
+    if (!data.flag) { errEl.textContent = data.message; errEl.classList.remove('hidden'); return; }
+
+    closePayModal();
+    const rzp = new Razorpay({
+      key: data.razorpay_key,
+      amount: data.amount,
+      currency: 'INR',
+      name: 'DigitalVault',
+      description: currentProduct.name,
+      order_id: data.razorpay_order_id,
+      prefill: { name, email, contact: phone },
+      theme: { color: '#f5c842' },
+      handler: async function(response) {
+        const verRes = await fetch(`${API}/order/payment-success`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ razorpay_response: response, order_id: data.order_id, email })
+        });
+        const verData = await verRes.json();
+        if (verData.flag) {
+          const base = window.location.href.replace(/\/[^\/]*$/, '');
+          window.location.href = `${base}/download.html?token=${verData.download_token}`;
+        }
+      }
+    });
+    rzp.open();
+  } catch(e) {
+    errEl.textContent = 'Network error. Try again.';
+    errEl.classList.remove('hidden');
+  }
+}
+
+// Toast
+function showToast(msg, bg, color) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = bg;
+  t.style.color = color;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Init
+loadProduct();
+updateCartCount();
+</script>
+</body>
+</html>

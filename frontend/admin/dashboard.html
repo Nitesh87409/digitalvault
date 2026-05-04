@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard – DigitalVault Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    body { font-family: 'DM Sans', sans-serif; background: #0a0a0f; color: #e8e8f0; }
+    h1,h2,h3,.logo { font-family: 'Syne', sans-serif; }
+    .sidebar { background: #0e0e18; border-right: 1px solid rgba(245,200,66,0.1); width: 240px; min-height: 100vh; position: fixed; left: 0; top: 0; }
+    .main { margin-left: 240px; }
+    .nav-link { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: 10px; color: #6b7280; font-size: 0.875rem; transition: all 0.2s; cursor: pointer; }
+    .nav-link:hover,.nav-link.active { background: rgba(245,200,66,0.08); color: #f5c842; }
+    .stat-card { background: #12121a; border: 1px solid rgba(245,200,66,0.1); border-radius: 14px; padding: 20px; }
+    .gold-btn { background: linear-gradient(135deg,#f5c842,#e0a800); color: #0a0a0f; font-weight: 700; font-family: 'Syne',sans-serif; cursor: pointer; border: none; transition: all 0.2s; }
+    .gold-btn:hover { box-shadow: 0 0 20px rgba(245,200,66,0.3); }
+    .inp { background: #1a1a2a; border: 1px solid rgba(255,255,255,0.08); color: white; outline: none; }
+    .inp:focus { border-color: rgba(245,200,66,0.3); }
+    .table-row:hover { background: rgba(255,255,255,0.02); }
+    .badge-success { background: rgba(16,185,129,0.15); color: #10b981; padding: 2px 8px; border-radius: 999px; font-size: 0.7rem; }
+    .badge-pending { background: rgba(245,200,66,0.15); color: #f5c842; padding: 2px 8px; border-radius: 999px; font-size: 0.7rem; }
+    .tab-btn { padding: 8px 20px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; border: none; }
+    .tab-btn.active { background: rgba(245,200,66,0.1); color: #f5c842; border: 1px solid rgba(245,200,66,0.2); }
+    .tab-btn:not(.active) { background: transparent; color: #6b7280; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 50; display: flex; align-items: center; justify-content: center; }
+    .modal-box { background: #12121a; border: 1px solid rgba(245,200,66,0.2); border-radius: 16px; width: 100%; max-width: 480px; padding: 32px; position: relative; }
+    @media(max-width:768px){ .sidebar{display:none;} .main{margin-left:0;} }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar flex flex-col py-6 px-4">
+  <div class="logo text-xl font-bold mb-8 px-2" style="color:#f5c842">DigitalVault</div>
+  <nav class="flex-1 space-y-1">
+    <div class="nav-link active" onclick="showTab('dashboard')"><span>📊</span> Dashboard</div>
+    <div class="nav-link" onclick="showTab('products')"><span>📦</span> Products</div>
+    <div class="nav-link" onclick="showTab('orders')"><span>🛒</span> Orders</div>
+    <div class="nav-link" onclick="showTab('users')"><span>👥</span> Users</div>
+  </nav>
+  <div>
+    <div class="nav-link" onclick="logout()"><span>🚪</span> Logout</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main p-6 md:p-8">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <h1 class="text-2xl font-bold text-white" id="page-title">Dashboard</h1>
+      <p class="text-gray-500 text-sm mt-1" id="admin-welcome">Welcome back!</p>
+    </div>
+    <button onclick="showTab('products');openProductModal()" class="gold-btn px-4 py-2 rounded-lg text-sm">+ Add Product</button>
+  </div>
+
+  <!-- DASHBOARD TAB -->
+  <div id="tab-dashboard">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div class="stat-card">
+        <p class="text-gray-500 text-xs mb-1">Total Revenue</p>
+        <p class="text-2xl font-bold text-white" style="font-family:'Syne',sans-serif;" id="stat-revenue">₹0</p>
+      </div>
+      <div class="stat-card">
+        <p class="text-gray-500 text-xs mb-1">Total Orders</p>
+        <p class="text-2xl font-bold text-white" style="font-family:'Syne',sans-serif;" id="stat-orders">0</p>
+      </div>
+      <div class="stat-card">
+        <p class="text-gray-500 text-xs mb-1">Total Users</p>
+        <p class="text-2xl font-bold text-white" style="font-family:'Syne',sans-serif;" id="stat-users">0</p>
+      </div>
+      <div class="stat-card">
+        <p class="text-gray-500 text-xs mb-1">Products</p>
+        <p class="text-2xl font-bold text-white" style="font-family:'Syne',sans-serif;" id="stat-products">0</p>
+      </div>
+    </div>
+    <!-- Recent orders preview -->
+    <div style="background:#12121a;border:1px solid rgba(245,200,66,0.1);border-radius:14px;overflow:hidden">
+      <div class="p-4 border-b" style="border-color:rgba(255,255,255,0.05)">
+        <h3 class="font-semibold text-white">Recent Orders</h3>
+      </div>
+      <div id="recent-orders-table" class="divide-y" style="divide-color:rgba(255,255,255,0.04)">
+        <p class="p-6 text-gray-500 text-sm">Loading...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRODUCTS TAB -->
+  <div id="tab-products" class="hidden">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-lg font-bold text-white">All Products</h2>
+      <button onclick="openProductModal()" class="gold-btn px-4 py-2 rounded-lg text-sm">+ Add Product</button>
+    </div>
+    <div id="products-list" class="grid gap-4">
+      <p class="text-gray-500 text-sm">Loading...</p>
+    </div>
+  </div>
+
+  <!-- ORDERS TAB -->
+  <div id="tab-orders" class="hidden">
+    <h2 class="text-lg font-bold text-white mb-6">All Orders</h2>
+    <div style="background:#12121a;border:1px solid rgba(245,200,66,0.1);border-radius:14px;overflow:hidden">
+      <div id="orders-table">
+        <p class="p-6 text-gray-500 text-sm">Loading...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- USERS TAB -->
+  <div id="tab-users" class="hidden">
+    <h2 class="text-lg font-bold text-white mb-6">All Users</h2>
+    <div style="background:#12121a;border:1px solid rgba(245,200,66,0.1);border-radius:14px;overflow:hidden">
+      <div id="users-table">
+        <p class="p-6 text-gray-500 text-sm">Loading...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRODUCT MODAL — Full Screen -->
+<div id="product-modal" class="modal-overlay hidden" style="align-items:stretch;padding:0;overflow:hidden;">
+  <div style="background:#0a0a0f;width:100%;height:100vh;display:flex;flex-direction:column;position:relative;">
+
+    <!-- Top Bar -->
+    <div style="background:#0e0e18;border-bottom:1px solid rgba(245,200,66,0.15);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:10px;height:10px;border-radius:50%;background:#f5c842;"></div>
+        <h3 class="text-lg font-bold text-white" id="modal-title">Add Product</h3>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div id="modal-error" class="text-red-400 text-sm hidden"></div>
+        <button onclick="saveProduct()" class="gold-btn px-6 py-2 rounded-lg text-sm">💾 Save Product</button>
+        <button onclick="closeProductModal()" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#9ca3af;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;">✕</button>
+      </div>
+    </div>
+
+    <input type="hidden" id="edit-product-id"/>
+
+    <!-- Body — 25/75 split -->
+    <div style="display:flex;flex:1;overflow:hidden;">
+
+      <!-- LEFT — 25% -->
+      <div style="width:25%;min-width:260px;background:#0e0e18;border-right:1px solid rgba(245,200,66,0.1);padding:24px;overflow-y:auto;display:flex;flex-direction:column;gap:20px;">
+
+        <!-- Product Name -->
+        <div>
+          <label class="text-xs font-semibold mb-2 block" style="color:#f5c842;">📦 Product Name *</label>
+          <input id="p-name" class="inp w-full px-3 py-3 rounded-xl text-sm" placeholder="e.g. UPSC Notes Bundle"/>
+        </div>
+
+        <!-- Image Upload -->
+        <div>
+          <label class="text-xs font-semibold mb-2 block" style="color:#f5c842;">🖼️ Product Images (Max 10)</label>
+
+          <!-- Drag & Drop Zone -->
+          <div id="drop-zone"
+            onclick="document.getElementById('img-file-input').click()"
+            ondragover="event.preventDefault();this.style.borderColor='#f5c842'"
+            ondragleave="this.style.borderColor='rgba(245,200,66,0.2)'"
+            ondrop="handleDrop(event)"
+            style="border:2px dashed rgba(245,200,66,0.2);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:all 0.2s;background:rgba(245,200,66,0.03);">
+            <div style="font-size:28px;margin-bottom:6px;">📁</div>
+            <p style="color:#f5c842;font-size:0.8rem;font-weight:600;">Click ya Drag & Drop karo</p>
+            <p style="color:#6b7280;font-size:0.7rem;margin-top:4px;">JPG, PNG, WEBP · Max 5MB each · Max 10 images</p>
+          </div>
+          <input type="file" id="img-file-input" multiple accept="image/*" style="display:none" onchange="handleFileSelect(this.files)"/>
+
+          <!-- Image Previews Grid -->
+          <div id="img-preview-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px;"></div>
+          <p id="img-count-label" style="color:#6b7280;font-size:0.7rem;margin-top:6px;"></p>
+        </div>
+
+        <!-- Prices -->
+        <div>
+          <label class="text-xs font-semibold mb-2 block" style="color:#f5c842;">💰 Pricing</label>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div>
+              <label class="text-xs mb-1 block" style="color:#6b7280;">Original Price (₹) *</label>
+              <input id="p-original" type="number" class="inp w-full px-3 py-3 rounded-xl text-sm" placeholder="8497"/>
+            </div>
+            <div>
+              <label class="text-xs mb-1 block" style="color:#6b7280;">Sale Price (₹) *</label>
+              <input id="p-sale" type="number" class="inp w-full px-3 py-3 rounded-xl text-sm" placeholder="1999"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- Download File -->
+        <div>
+          <label class="text-xs font-semibold mb-2 block" style="color:#f5c842;">⬇️ Download File URL *</label>
+          <input id="p-file" class="inp w-full px-3 py-3 rounded-xl text-sm" placeholder="https://drive.google.com/..."/>
+          <p class="text-xs mt-1" style="color:#4b5563;">Google Drive / Dropbox / Direct link</p>
+        </div>
+
+      </div>
+
+      <!-- RIGHT — 75% Description -->
+      <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+
+        <!-- Toolbar -->
+        <div style="background:#12121a;border-bottom:1px solid rgba(255,255,255,0.06);padding:10px 16px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;flex-shrink:0;">
+          <button type="button" onclick="fmt('bold')" title="Bold" class="toolbar-btn" style="font-weight:800;">B</button>
+          <button type="button" onclick="fmt('italic')" title="Italic" class="toolbar-btn" style="font-style:italic;">I</button>
+          <button type="button" onclick="fmt('underline')" title="Underline" class="toolbar-btn" style="text-decoration:underline;">U</button>
+          <button type="button" onclick="fmt('strikeThrough')" title="Strikethrough" class="toolbar-btn" style="text-decoration:line-through;">S</button>
+
+          <div style="width:1px;height:24px;background:rgba(255,255,255,0.1);margin:0 4px;"></div>
+
+          <button type="button" onclick="fmt('justifyLeft')" class="toolbar-btn" title="Left align">⬅</button>
+          <button type="button" onclick="fmt('justifyCenter')" class="toolbar-btn" title="Center">▬</button>
+          <button type="button" onclick="fmt('justifyRight')" class="toolbar-btn" title="Right align">➡</button>
+
+          <div style="width:1px;height:24px;background:rgba(255,255,255,0.1);margin:0 4px;"></div>
+
+          <button type="button" onclick="fmt('insertUnorderedList')" class="toolbar-btn">• List</button>
+          <button type="button" onclick="fmt('insertOrderedList')" class="toolbar-btn">1. List</button>
+
+          <div style="width:1px;height:24px;background:rgba(255,255,255,0.1);margin:0 4px;"></div>
+
+          <select onchange="fmt('fontSize', this.value); this.value=''" class="toolbar-select">
+            <option value="">📏 Size</option>
+            <option value="1">Small</option>
+            <option value="3">Normal</option>
+            <option value="5">Large</option>
+            <option value="7">Huge</option>
+          </select>
+
+          <select onchange="fmt('foreColor', this.value); this.value=''" class="toolbar-select">
+            <option value="">🎨 Color</option>
+            <option value="#f5c842" style="background:#f5c842">⬛ Gold</option>
+            <option value="#ffffff">⬛ White</option>
+            <option value="#10b981">⬛ Green</option>
+            <option value="#ef4444">⬛ Red</option>
+            <option value="#3b82f6">⬛ Blue</option>
+            <option value="#f97316">⬛ Orange</option>
+            <option value="#a855f7">⬛ Purple</option>
+          </select>
+
+          <select onchange="fmt('formatBlock', this.value); this.value=''" class="toolbar-select">
+            <option value="">🔤 Heading</option>
+            <option value="h1">H1 — Big</option>
+            <option value="h2">H2 — Medium</option>
+            <option value="h3">H3 — Small</option>
+            <option value="p">Normal</option>
+          </select>
+
+          <div style="width:1px;height:24px;background:rgba(255,255,255,0.1);margin:0 4px;"></div>
+          <button type="button" onclick="fmt('removeFormat')" class="toolbar-btn" style="color:#ef4444;" title="Clear all formatting">✕ Clear</button>
+        </div>
+
+        <!-- Editor Area -->
+        <div id="p-desc-editor"
+          contenteditable="true"
+          style="flex:1;padding:28px 36px;font-size:15px;line-height:1.8;color:#e8e8f0;outline:none;overflow-y:auto;background:#0a0a0f;"
+          placeholder="Yahan product ki detail likhein... Bold, colors, headings sab use kar sakte hain!">
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.toolbar-btn {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #e8e8f0;
+  padding: 5px 11px;
+  border-radius: 7px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.toolbar-btn:hover { background: rgba(245,200,66,0.12); border-color: rgba(245,200,66,0.3); color: #f5c842; }
+.toolbar-select {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #e8e8f0;
+  padding: 5px 10px;
+  border-radius: 7px;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+#p-desc-editor:empty:before {
+  content: attr(placeholder);
+  color: #374151;
+  pointer-events: none;
+}
+#p-desc-editor h1 { font-size: 2em; font-weight: 800; margin-bottom: 8px; }
+#p-desc-editor h2 { font-size: 1.5em; font-weight: 700; margin-bottom: 6px; }
+#p-desc-editor h3 { font-size: 1.2em; font-weight: 600; margin-bottom: 4px; }
+#p-desc-editor ul { padding-left: 24px; list-style: disc; }
+#p-desc-editor ol { padding-left: 24px; list-style: decimal; }
+#p-desc-editor p { margin-bottom: 6px; }
+</style>
+
+<script>
+const API = 'http://localhost:5000';
+let token = localStorage.getItem('admin_token');
+if (!token) window.location.href = 'login.html';
+
+const admin = JSON.parse(localStorage.getItem('admin_data') || '{}');
+document.getElementById('admin-welcome').textContent = `Welcome, ${admin.name || 'Admin'}!`;
+
+const headers = { 'Content-Type': 'application/json', 'authorization': token };
+
+// Tab switching
+function showTab(name) {
+  ['dashboard','products','orders','users'].forEach(t => {
+    document.getElementById(`tab-${t}`).classList.add('hidden');
+    document.querySelectorAll('.nav-link').forEach((el,i) => {
+      const tabs = ['dashboard','products','orders','users'];
+      if(tabs[i] === t) el.classList.remove('active');
+    });
+  });
+  document.getElementById(`tab-${name}`).classList.remove('hidden');
+  document.getElementById('page-title').textContent = name.charAt(0).toUpperCase() + name.slice(1);
+  document.querySelectorAll('.nav-link').forEach(el => {
+    if(el.textContent.trim().toLowerCase().includes(name)) el.classList.add('active');
+    else el.classList.remove('active');
+  });
+
+  if(name === 'dashboard') loadDashboard();
+  if(name === 'products') loadProducts();
+  if(name === 'orders') loadOrders();
+  if(name === 'users') loadUsers();
+}
+
+// Load dashboard
+async function loadDashboard() {
+  try {
+    const [ordersRes, usersRes, productsRes] = await Promise.all([
+      fetch(`${API}/order/all`, { headers }),
+      fetch(`${API}/user/all`, { headers }),
+      fetch(`${API}/product`, { headers })
+    ]);
+    const [oData, uData, pData] = await Promise.all([ordersRes.json(), usersRes.json(), productsRes.json()]);
+
+    const orders = oData.orders || [];
+    const revenue = orders.filter(o=>o.payment_status===1).reduce((s,o)=>s+o.amount,0);
+    document.getElementById('stat-revenue').textContent = '₹' + revenue.toLocaleString();
+    document.getElementById('stat-orders').textContent = orders.length;
+    document.getElementById('stat-users').textContent = (uData.users||[]).length;
+    document.getElementById('stat-products').textContent = (pData.products||[]).length;
+
+    // Recent orders
+    const tbody = document.getElementById('recent-orders-table');
+    if(orders.length === 0) { tbody.innerHTML = '<p class="p-6 text-gray-500 text-sm">No orders yet.</p>'; return; }
+    tbody.innerHTML = orders.slice(0,10).map(o => `
+      <div class="table-row flex items-center justify-between px-4 py-3">
+        <div>
+          <div class="text-sm text-white">${o.name}</div>
+          <div class="text-xs text-gray-500">${o.email}</div>
+        </div>
+        <div class="text-sm text-yellow-400 font-semibold">₹${o.amount?.toLocaleString()}</div>
+        <span class="${o.payment_status===1?'badge-success':'badge-pending'}">${o.payment_status===1?'Paid':'Pending'}</span>
+        <div class="text-xs text-gray-600">${new Date(o.createdAt).toLocaleDateString('en-IN')}</div>
+      </div>
+    `).join('');
+  } catch(e) { console.error(e); }
+}
+
+// Load products
+async function loadProducts() {
+  const container = document.getElementById('products-list');
+  try {
+    const res = await fetch(`${API}/product`, { headers });
+    const data = await res.json();
+    const products = data.products || [];
+    if(!products.length) { container.innerHTML = '<p class="text-gray-500 text-sm">No products. Add your first product!</p>'; return; }
+    container.innerHTML = products.map(p => `
+      <div style="background:#12121a;border:1px solid rgba(245,200,66,0.1);border-radius:12px;padding:20px" class="flex items-center justify-between gap-4">
+        <div class="flex-1">
+          <div class="font-semibold text-white">${p.name}</div>
+          <div class="text-xs text-gray-500 mt-1">${p.description||''}</div>
+          <div class="flex items-center gap-3 mt-2">
+            <span class="text-yellow-400 font-bold">₹${p.sale_price?.toLocaleString()}</span>
+            <span class="text-gray-600 line-through text-sm">₹${p.original_price?.toLocaleString()}</span>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="editProduct('${p._id}')" class="px-3 py-2 rounded-lg text-xs text-yellow-400 hover:bg-yellow-400 hover:text-black transition" style="border:1px solid rgba(245,200,66,0.3)">Edit</button>
+          <button onclick="deleteProduct('${p._id}')" class="px-3 py-2 rounded-lg text-xs text-red-400 hover:bg-red-400 hover:text-white transition" style="border:1px solid rgba(239,68,68,0.3)">Delete</button>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) { container.innerHTML = '<p class="text-red-400 text-sm">Error loading products.</p>'; }
+}
+
+// Load orders
+async function loadOrders() {
+  const container = document.getElementById('orders-table');
+  try {
+    const res = await fetch(`${API}/order/all`, { headers });
+    const data = await res.json();
+    const orders = data.orders || [];
+    if(!orders.length) { container.innerHTML = '<p class="p-6 text-gray-500 text-sm">No orders yet.</p>'; return; }
+    container.innerHTML = `
+      <table class="w-full text-sm">
+        <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+          <th class="text-left p-4 text-gray-500 font-medium">Customer</th>
+          <th class="text-left p-4 text-gray-500 font-medium hidden md:table-cell">Email</th>
+          <th class="text-left p-4 text-gray-500 font-medium">Amount</th>
+          <th class="text-left p-4 text-gray-500 font-medium">Status</th>
+          <th class="text-left p-4 text-gray-500 font-medium hidden md:table-cell">Date</th>
+        </tr></thead>
+        <tbody>${orders.map(o=>`
+          <tr class="table-row border-b" style="border-color:rgba(255,255,255,0.03)">
+            <td class="p-4 text-white">${o.name}</td>
+            <td class="p-4 text-gray-400 hidden md:table-cell">${o.email}</td>
+            <td class="p-4 text-yellow-400 font-semibold">₹${o.amount?.toLocaleString()}</td>
+            <td class="p-4"><span class="${o.payment_status===1?'badge-success':'badge-pending'}">${o.payment_status===1?'Paid':'Pending'}</span></td>
+            <td class="p-4 text-gray-500 hidden md:table-cell">${new Date(o.createdAt).toLocaleDateString('en-IN')}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+  } catch(e) { container.innerHTML = '<p class="p-6 text-red-400 text-sm">Error loading orders.</p>'; }
+}
+
+// Load users
+async function loadUsers() {
+  const container = document.getElementById('users-table');
+  try {
+    const res = await fetch(`${API}/user/all`, { headers });
+    const data = await res.json();
+    const users = data.users || [];
+    if(!users.length) { container.innerHTML = '<p class="p-6 text-gray-500 text-sm">No users yet.</p>'; return; }
+    container.innerHTML = `
+      <table class="w-full text-sm">
+        <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+          <th class="text-left p-4 text-gray-500 font-medium">Name</th>
+          <th class="text-left p-4 text-gray-500 font-medium">Email</th>
+          <th class="text-left p-4 text-gray-500 font-medium hidden md:table-cell">Phone</th>
+          <th class="text-left p-4 text-gray-500 font-medium hidden md:table-cell">Joined</th>
+        </tr></thead>
+        <tbody>${users.map(u=>`
+          <tr class="table-row border-b" style="border-color:rgba(255,255,255,0.03)">
+            <td class="p-4 text-white">${u.name}</td>
+            <td class="p-4 text-gray-400">${u.email}</td>
+            <td class="p-4 text-gray-400 hidden md:table-cell">${u.phone||'-'}</td>
+            <td class="p-4 text-gray-500 hidden md:table-cell">${new Date(u.createdAt).toLocaleDateString('en-IN')}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+  } catch(e) { container.innerHTML = '<p class="p-6 text-red-400 text-sm">Error loading users.</p>'; }
+}
+
+// Rich text editor format function
+function fmt(cmd, val = null) {
+  document.getElementById('p-desc-editor').focus();
+  document.execCommand(cmd, false, val);
+}
+
+// Image upload vars
+let newImageFiles = [];
+let existingImages = [];
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').style.borderColor = 'rgba(245,200,66,0.2)';
+  handleFileSelect(e.dataTransfer.files);
+}
+
+function handleFileSelect(files) {
+  const remaining = 10 - existingImages.length - newImageFiles.length;
+  if (remaining <= 0) { alert('Max 10 images allowed!'); return; }
+  newImageFiles = [...newImageFiles, ...Array.from(files).slice(0, remaining)];
+  renderImagePreviews();
+}
+
+function renderImagePreviews() {
+  const grid = document.getElementById('img-preview-grid');
+  const label = document.getElementById('img-count-label');
+  const total = existingImages.length + newImageFiles.length;
+  label.textContent = total > 0 ? total + '/10 images added' : '';
+  grid.innerHTML = '';
+
+  existingImages.forEach((src, i) => {
+    const div = document.createElement('div');
+    div.style.cssText = 'position:relative;border-radius:8px;overflow:hidden;height:80px;';
+    div.innerHTML = `<img src="${API}${src}" style="width:100%;height:100%;object-fit:cover;"/><button onclick="removeExistingImage(${i})" style="position:absolute;top:3px;right:3px;background:rgba(239,68,68,0.9);border:none;color:white;width:20px;height:20px;border-radius:50%;cursor:pointer;font-size:11px;">✕</button>`;
+    grid.appendChild(div);
+  });
+
+  newImageFiles.forEach((file, i) => {
+    const div = document.createElement('div');
+    div.style.cssText = 'position:relative;border-radius:8px;overflow:hidden;height:80px;border:1px dashed rgba(245,200,66,0.4);';
+    const url = URL.createObjectURL(file);
+    div.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;"/><div style="position:absolute;top:3px;left:3px;background:#f5c842;border-radius:4px;padding:1px 4px;font-size:9px;color:#000;font-weight:700;">NEW</div><button onclick="removeNewImage(${i})" style="position:absolute;top:3px;right:3px;background:rgba(239,68,68,0.9);border:none;color:white;width:20px;height:20px;border-radius:50%;cursor:pointer;font-size:11px;">✕</button>`;
+    grid.appendChild(div);
+  });
+}
+
+function removeExistingImage(i) { existingImages.splice(i, 1); renderImagePreviews(); }
+function removeNewImage(i) { newImageFiles.splice(i, 1); renderImagePreviews(); }
+
+function openProductModal(product = null) {
+  document.getElementById('modal-title').textContent = product ? 'Edit Product' : 'Add Product';
+  document.getElementById('edit-product-id').value = product?._id || '';
+  document.getElementById('p-name').value = product?.name || '';
+  document.getElementById('p-original').value = product?.original_price || '';
+  document.getElementById('p-sale').value = product?.sale_price || '';
+  document.getElementById('p-file').value = product?.file_url || '';
+  document.getElementById('p-desc-editor').innerHTML = product?.description || '';
+  document.getElementById('modal-error').classList.add('hidden');
+  document.getElementById('img-file-input').value = '';
+  existingImages = product?.images || [];
+  newImageFiles = [];
+  renderImagePreviews();
+  document.getElementById('product-modal').classList.remove('hidden');
+}
+
+function closeProductModal() {
+  document.getElementById('product-modal').classList.add('hidden');
+  newImageFiles = []; existingImages = [];
+}
+
+async function editProduct(id) {
+  const res = await fetch(`${API}/product/${id}`, { headers });
+  const data = await res.json();
+  if(data.flag) openProductModal(data.product);
+}
+
+async function saveProduct() {
+  const id = document.getElementById('edit-product-id').value;
+  const name = document.getElementById('p-name').value.trim();
+  const description = document.getElementById('p-desc-editor').innerHTML.trim();
+  const original_price = Number(document.getElementById('p-original').value);
+  const sale_price = Number(document.getElementById('p-sale').value);
+  const file_url = document.getElementById('p-file').value.trim();
+  const errEl = document.getElementById('modal-error');
+
+  if (!name || !original_price || !sale_price || !file_url) {
+    errEl.textContent = 'Please fill all required fields.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+  errEl.classList.add('hidden');
+
+  // FormData use karo — images + text fields dono bhejne ke liye
+  const formData = new FormData();
+  formData.append('name', name);
+  formData.append('description', description);
+  formData.append('original_price', original_price);
+  formData.append('sale_price', sale_price);
+  formData.append('file_url', file_url);
+
+  // Existing images jo rakhni hain
+  existingImages.forEach(img => formData.append('existing_images', img));
+
+  // Naye images
+  newImageFiles.forEach(file => formData.append('images', file));
+
+  const url = id ? `${API}/product/${id}` : `${API}/product`;
+  const method = id ? 'PUT' : 'POST';
+
+  // Note: headers mein Content-Type mat daalo — browser khud set karega multipart boundary
+  const res = await fetch(url, {
+    method,
+    headers: { 'authorization': token }, // sirf auth token
+    body: formData
+  });
+  const data = await res.json();
+
+  if (data.flag) { closeProductModal(); loadProducts(); }
+  else { errEl.textContent = data.message || 'Error saving product.'; errEl.classList.remove('hidden'); }
+}
+
+  if (data.flag) { closeProductModal(); loadProducts(); }
+  else { errEl.textContent = data.message || 'Error saving product.'; errEl.classList.remove('hidden'); }
+
+
+async function deleteProduct(id) {
+  if(!confirm('Delete this product?')) return;
+  const res = await fetch(`${API}/product/${id}`, { method: 'DELETE', headers });
+  const data = await res.json();
+  if(data.flag) loadProducts();
+  else alert(data.message);
+}
+
+function logout() {
+  localStorage.removeItem('admin_token');
+  localStorage.removeItem('admin_data');
+  window.location.href = 'login.html';
+}
+
+// Init
+loadDashboard();
+</script>
+</body>
+</html>

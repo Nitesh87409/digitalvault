@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Downloads – DigitalVault</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root { --gold: #f5c842; --dark: #0a0a0f; --card: #12121a; --border: rgba(245,200,66,0.15); }
+    body { font-family: 'DM Sans', sans-serif; background: var(--dark); color: #e8e8f0; min-height: 100vh; }
+    h1,h2,h3 { font-family: 'Syne', sans-serif; }
+    .gold-text { color: var(--gold); }
+    .gold-btn { background: linear-gradient(135deg,#f5c842,#e0a800); color: #0a0a0f; font-family: 'Syne',sans-serif; font-weight: 700; border: none; cursor: pointer; transition: all 0.3s; }
+    .gold-btn:hover { box-shadow: 0 0 30px rgba(245,200,66,0.4); transform: translateY(-1px); }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; }
+    .inp { background: #1a1a2a; border: 1px solid rgba(255,255,255,0.08); color: white; outline: none; transition: border-color 0.2s; }
+    .inp:focus { border-color: rgba(245,200,66,0.4); }
+    .download-btn { background: linear-gradient(135deg,#f5c842,#e0a800); color: #0a0a0f; font-weight: 700; font-family: 'Syne',sans-serif; text-decoration: none; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 12px; padding: 14px 20px; }
+    .download-btn:hover { box-shadow: 0 0 25px rgba(245,200,66,0.4); transform: translateY(-2px); }
+    .order-card { background: #0e0e18; border: 1px solid rgba(245,200,66,0.1); border-radius: 14px; padding: 20px; margin-bottom: 16px; transition: border-color 0.3s; }
+    .order-card:hover { border-color: rgba(245,200,66,0.3); }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav style="background:rgba(10,10,15,0.9);border-bottom:1px solid var(--border);backdrop-filter:blur(20px)" class="px-6 py-4 sticky top-0 z-10">
+  <div class="max-w-4xl mx-auto flex items-center justify-between">
+    <a href="index.html" class="text-xl font-bold gold-text">DigitalVault</a>
+    <a href="index.html" class="text-sm text-gray-400 hover:text-white transition">← Back to Store</a>
+  </div>
+</nav>
+
+<div class="max-w-2xl mx-auto px-6 py-16">
+
+  <!-- STEP 1: Email form -->
+  <div id="step-email">
+    <div class="text-center mb-10">
+      <div class="text-5xl mb-4">📦</div>
+      <h1 class="text-3xl font-bold text-white mb-3">My Downloads</h1>
+      <p class="text-gray-400">Enter your email to access all your purchased products</p>
+    </div>
+
+    <div class="card p-8">
+      <div class="mb-4">
+        <label class="text-xs text-gray-400 mb-2 block">Email Address *</label>
+        <input id="email-input" type="email" class="inp w-full px-4 py-4 rounded-xl text-base" placeholder="your@email.com" onkeydown="if(event.key==='Enter') findOrders()"/>
+      </div>
+      <div id="email-error" class="text-red-400 text-sm mb-4 hidden"></div>
+      <button onclick="findOrders()" id="find-btn" class="gold-btn w-full py-4 rounded-xl text-base">
+        Find My Orders →
+      </button>
+      <p class="text-gray-600 text-xs text-center mt-4">Use the same email you used during purchase</p>
+    </div>
+  </div>
+
+  <!-- STEP 2: Orders list -->
+  <div id="step-orders" class="hidden">
+    <div class="flex items-center justify-between mb-8">
+      <div>
+        <h2 class="text-2xl font-bold text-white">Your Purchases</h2>
+        <p class="text-gray-500 text-sm mt-1" id="orders-email-label"></p>
+      </div>
+      <button onclick="goBack()" class="text-sm text-gray-400 hover:text-yellow-400 transition px-4 py-2 rounded-lg" style="border:1px solid rgba(255,255,255,0.08)">
+        ← Change Email
+      </button>
+    </div>
+
+    <!-- No orders -->
+    <div id="no-orders" class="card p-10 text-center hidden">
+      <div class="text-4xl mb-4">🔍</div>
+      <h3 class="text-lg font-bold text-white mb-2">No Orders Found</h3>
+      <p class="text-gray-400 text-sm mb-6">We couldn't find any purchases with this email address.</p>
+      <p class="text-gray-500 text-xs">Used a different email? <button onclick="goBack()" class="gold-text hover:underline">Try again</button></p>
+    </div>
+
+    <!-- Orders list -->
+    <div id="orders-list"></div>
+  </div>
+
+  <!-- Loading -->
+  <div id="step-loading" class="hidden text-center py-20">
+    <div class="w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+    <p class="text-gray-400">Finding your orders...</p>
+  </div>
+
+</div>
+
+<!-- Footer -->
+<div class="text-center py-8 text-gray-600 text-sm border-t" style="border-color:var(--border)">
+  <p>Need help? Email us at <a href="mailto:support@digitalvault.in" class="gold-text hover:underline">support@digitalvault.in</a></p>
+</div>
+
+<script>
+const API = 'http://localhost:5000';
+
+function showStep(step) {
+  ['step-email','step-orders','step-loading'].forEach(s => {
+    document.getElementById(s).classList.add('hidden');
+  });
+  document.getElementById(step).classList.remove('hidden');
+}
+
+async function findOrders() {
+  const email = document.getElementById('email-input').value.trim();
+  const errEl = document.getElementById('email-error');
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errEl.textContent = 'Please enter a valid email address.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+  errEl.classList.add('hidden');
+
+  const btn = document.getElementById('find-btn');
+  btn.textContent = 'Searching...';
+  btn.disabled = true;
+
+  showStep('step-loading');
+
+  try {
+    const res = await fetch(`${API}/order/my-orders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+
+    showStep('step-orders');
+    document.getElementById('orders-email-label').textContent = email;
+
+    if (!data.flag || !data.orders || data.orders.length === 0) {
+      document.getElementById('no-orders').classList.remove('hidden');
+      document.getElementById('orders-list').innerHTML = '';
+    } else {
+      document.getElementById('no-orders').classList.add('hidden');
+      renderOrders(data.orders);
+    }
+
+  } catch(e) {
+    showStep('step-email');
+    errEl.textContent = 'Connection error. Is the server running?';
+    errEl.classList.remove('hidden');
+  }
+
+  btn.textContent = 'Find My Orders →';
+  btn.disabled = false;
+}
+
+function renderOrders(orders) {
+  const container = document.getElementById('orders-list');
+  container.innerHTML = orders.map((order, i) => {
+    const date = new Date(order.createdAt).toLocaleDateString('en-IN', {
+      day: 'numeric', month: 'long', year: 'numeric'
+    });
+    const productName = order.product_id?.name || 'Digital Product';
+    const productId = order.product_id?._id || order.product_id;
+
+    // Agar product_id hai toh direct file link, warna download page pe bhejo
+    const downloadUrl = productId
+      ? `${API}/order/file/${order.download_token}/${productId}`
+      : `${window.location.origin}${window.location.pathname.replace('my-orders.html','download.html')}?token=${order.download_token}`;
+
+    return `
+      <div class="order-card">
+        <div class="flex items-start justify-between gap-4 mb-4">
+          <div>
+            <div class="text-xs text-gray-500 mb-1">Order #${i + 1} · ${date}</div>
+            <h3 class="text-lg font-bold text-white">${productName}</h3>
+            <div class="text-yellow-400 font-semibold mt-1">₹${order.amount?.toLocaleString()}</div>
+          </div>
+          <span class="text-xs px-3 py-1 rounded-full font-semibold" style="background:rgba(16,185,129,0.15);color:#10b981">✓ Paid</span>
+        </div>
+        <a href="${downloadUrl}"
+           target="_blank"
+           rel="noopener noreferrer"
+           class="download-btn w-full">
+          ⬇️ Download ${productName}
+        </a>
+      </div>
+    `;
+  }).join('');
+}
+
+function goBack() {
+  showStep('step-email');
+  document.getElementById('orders-list').innerHTML = '';
+  document.getElementById('no-orders').classList.add('hidden');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DigitalVault – Premium Digital Products</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <style>
+    :root {
+      --gold: #f5c842;
+      --dark: #0a0a0f;
+      --card: #12121a;
+      --border: rgba(245,200,66,0.15);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--dark); color: #e8e8f0; overflow-x: hidden; }
+    h1,h2,h3,h4,h5 { font-family: 'Syne', sans-serif; }
+
+    /* Grain overlay */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      opacity: 0.4;
+    }
+
+    /* Glow blobs */
+    .blob { position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.12; pointer-events: none; z-index: 0; }
+
+    .gold-text { color: var(--gold); }
+    .gold-btn {
+      background: linear-gradient(135deg, #f5c842, #e0a800);
+      color: #0a0a0f; font-family: 'Syne', sans-serif; font-weight: 700;
+      border: none; cursor: pointer; transition: all 0.3s ease;
+      box-shadow: 0 0 30px rgba(245,200,66,0.3);
+    }
+    .gold-btn:hover { transform: translateY(-2px); box-shadow: 0 0 50px rgba(245,200,66,0.5); }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      transition: border-color 0.3s, transform 0.3s;
+    }
+    .card:hover { border-color: rgba(245,200,66,0.4); transform: translateY(-4px); }
+
+    /* Navbar */
+    nav {
+      position: fixed; top: 0; width: 100%; z-index: 100;
+      background: rgba(10,10,15,0.85); backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Hero */
+    .hero-headline { font-size: clamp(2.5rem, 6vw, 5rem); line-height: 1.05; font-weight: 800; }
+    .hero-sub { font-size: clamp(1rem, 2vw, 1.25rem); color: #9999b3; max-width: 560px; }
+
+    /* Countdown */
+    .countdown-box {
+      background: rgba(245,200,66,0.08);
+      border: 1px solid rgba(245,200,66,0.2);
+      border-radius: 12px; text-align: center; padding: 12px 20px;
+    }
+
+    /* FAQ */
+    .faq-item summary { cursor: pointer; list-style: none; }
+    .faq-item summary::-webkit-details-marker { display: none; }
+    .faq-item[open] summary .arrow { transform: rotate(180deg); }
+    .arrow { transition: transform 0.3s; display: inline-block; }
+
+    /* Testimonial stars */
+    .stars { color: var(--gold); letter-spacing: 2px; }
+
+    /* Scroll reveal */
+    .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* Mobile nav */
+    #mobile-menu { display: none; }
+    #mobile-menu.open { display: flex; }
+
+    /* Pricing badge */
+    .badge {
+      background: linear-gradient(135deg,#f5c842,#e0a800);
+      color: #0a0a0f; font-size: 0.7rem; font-weight: 700;
+      padding: 3px 10px; border-radius: 999px; font-family: 'Syne',sans-serif;
+      letter-spacing: 1px; text-transform: uppercase;
+    }
+
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+    .float { animation: float 4s ease-in-out infinite; }
+
+    @keyframes pulse-glow {
+      0%,100%{ box-shadow: 0 0 30px rgba(245,200,66,0.3); }
+      50%{ box-shadow: 0 0 60px rgba(245,200,66,0.6); }
+    }
+    .pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="px-6 py-4">
+  <div class="max-w-6xl mx-auto flex items-center justify-between">
+    <a href="#" class="text-xl font-bold gold-text" style="font-family:'Syne',sans-serif;">DigitalVault</a>
+    <div class="hidden md:flex items-center gap-8 text-sm text-gray-300">
+      <a href="#products" class="hover:text-white transition">Products</a>
+      <a href="#features" class="hover:text-white transition">Features</a>
+      <a href="#pricing" class="hover:text-white transition">Pricing</a>
+      <a href="#faq" class="hover:text-white transition">FAQ</a>
+    </div>
+    <div class="hidden md:flex items-center gap-3">
+      <a href="admin/login.html" class="text-sm text-gray-400 hover:text-white transition">Admin</a>
+      <a href="cart.html" class="relative text-gray-300 hover:text-yellow-400 transition mr-1">
+        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+        <span id="nav-cart-count" class="absolute -top-2 -right-2 bg-yellow-400 text-black text-xs font-bold w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
+      </a>
+      <button onclick="scrollToPricing()" class="gold-btn px-5 py-2 rounded-full text-sm">Buy Now</button>
+    </div>
+    <!-- Mobile menu button -->
+    <button onclick="toggleMobileMenu()" class="md:hidden text-gray-300">
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+  </div>
+  <!-- Mobile menu -->
+  <div id="mobile-menu" class="md:hidden flex-col gap-4 px-6 pt-4 pb-6 text-sm text-gray-300">
+    <a href="#products" onclick="toggleMobileMenu()" class="block hover:text-white">Products</a>
+    <a href="#features" onclick="toggleMobileMenu()" class="block hover:text-white">Features</a>
+    <a href="#pricing" onclick="toggleMobileMenu()" class="block hover:text-white">Pricing</a>
+    <a href="#faq" onclick="toggleMobileMenu()" class="block hover:text-white">FAQ</a>
+    <a href="admin/login.html" class="block hover:text-white">Admin Login</a>
+    <button onclick="scrollToPricing()" class="gold-btn w-full py-2 rounded-full mt-2">Buy Now</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="relative min-h-screen flex items-center justify-center pt-24 pb-20 px-6 overflow-hidden">
+  <div class="blob w-96 h-96 bg-yellow-400 top-20 -left-40"></div>
+  <div class="blob w-80 h-80 bg-purple-600 bottom-20 -right-20"></div>
+
+  <div class="relative z-10 max-w-5xl mx-auto text-center">
+    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-8" style="background:rgba(245,200,66,0.1);border:1px solid rgba(245,200,66,0.2)">
+      <span class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
+      <span class="text-sm text-yellow-400 font-medium">Limited Time Offer — 70% OFF</span>
+    </div>
+
+    <h1 class="hero-headline text-white mb-6">
+      The Ultimate<br/><span class="gold-text">Digital Product</span><br/>Bundle
+    </h1>
+    <p class="hero-sub mx-auto mb-10">
+      Everything you need to launch, grow, and scale your online business — templates, tools, and guides — all in one place.
+    </p>
+
+    <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
+      <button onclick="scrollToPricing()" class="gold-btn pulse-glow px-8 py-4 rounded-full text-lg">
+        Get Instant Access →
+      </button>
+      <a href="#products" class="px-8 py-4 rounded-full text-sm text-gray-300 hover:text-white transition" style="border:1px solid rgba(255,255,255,0.1)">
+        See What's Inside
+      </a>
+    </div>
+
+    <!-- Stats row -->
+    <div class="flex flex-wrap justify-center gap-8">
+      <div class="text-center">
+        <div class="text-3xl font-bold gold-text" style="font-family:'Syne',sans-serif;" id="stat-sales">0</div>
+        <div class="text-sm text-gray-500 mt-1">Products Sold</div>
+      </div>
+      <div class="text-center">
+        <div class="text-3xl font-bold gold-text" style="font-family:'Syne',sans-serif;">4.9★</div>
+        <div class="text-sm text-gray-500 mt-1">Average Rating</div>
+      </div>
+      <div class="text-center">
+        <div class="text-3xl font-bold gold-text" style="font-family:'Syne',sans-serif;">24/7</div>
+        <div class="text-sm text-gray-500 mt-1">Instant Download</div>
+      </div>
+      <div class="text-center">
+        <div class="text-3xl font-bold gold-text" style="font-family:'Syne',sans-serif;">100%</div>
+        <div class="text-sm text-gray-500 mt-1">Money Back</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRODUCTS SHOWCASE -->
+<section id="products" class="py-20 px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-14 reveal">
+      <h2 class="text-4xl font-bold text-white mb-4">What You'll Get</h2>
+      <p class="text-gray-400 text-lg">Premium digital products crafted for modern entrepreneurs</p>
+    </div>
+
+    <div id="products-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Loading skeleton -->
+      <div class="card p-6 animate-pulse">
+        <div class="w-full h-44 rounded-xl mb-5" style="background:#1a1a2a"></div>
+        <div class="h-4 rounded mb-3" style="background:#1a1a2a;width:60%"></div>
+        <div class="h-5 rounded mb-2" style="background:#1a1a2a"></div>
+        <div class="h-4 rounded" style="background:#1a1a2a;width:80%"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" class="py-20 px-6" style="background:rgba(245,200,66,0.02)">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-14 reveal">
+      <h2 class="text-4xl font-bold text-white mb-4">Why Choose Us?</h2>
+      <p class="text-gray-400 text-lg">Built for creators who mean business</p>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="card p-8 reveal">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-5" style="background:rgba(245,200,66,0.1)">⚡</div>
+        <h3 class="text-lg font-bold text-white mb-2">Instant Download</h3>
+        <p class="text-gray-400 text-sm">Get access immediately after payment. No waiting, no delays.</p>
+      </div>
+      <div class="card p-8 reveal">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-5" style="background:rgba(245,200,66,0.1)">🔒</div>
+        <h3 class="text-lg font-bold text-white mb-2">Secure Payment</h3>
+        <p class="text-gray-400 text-sm">Powered by Razorpay. 100% safe and encrypted transactions.</p>
+      </div>
+      <div class="card p-8 reveal">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-5" style="background:rgba(245,200,66,0.1)">♾️</div>
+        <h3 class="text-lg font-bold text-white mb-2">Lifetime Access</h3>
+        <p class="text-gray-400 text-sm">Buy once, use forever. Free updates included.</p>
+      </div>
+      <div class="card p-8 reveal">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-5" style="background:rgba(245,200,66,0.1)">💰</div>
+        <h3 class="text-lg font-bold text-white mb-2">Money-Back Guarantee</h3>
+        <p class="text-gray-400 text-sm">Not happy? Get a full refund within 7 days. No questions asked.</p>
+      </div>
+      <div class="card p-8 reveal">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-5" style="background:rgba(245,200,66,0.1)">📧</div>
+        <h3 class="text-lg font-bold text-white mb-2">Email Support</h3>
+        <p class="text-gray-400 text-sm">Dedicated support team ready to help you succeed.</p>
+      </div>
+      <div class="card p-8 reveal">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-5" style="background:rgba(245,200,66,0.1)">🔄</div>
+        <h3 class="text-lg font-bold text-white mb-2">Regular Updates</h3>
+        <p class="text-gray-400 text-sm">New products and updates added every month — free for buyers.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing" class="py-20 px-6">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-14 reveal">
+      <h2 class="text-4xl font-bold text-white mb-4">Get Everything. Pay Once.</h2>
+      <p class="text-gray-400 text-lg">Offer ends in:</p>
+      <!-- Countdown -->
+      <div class="flex justify-center gap-4 mt-6">
+        <div class="countdown-box">
+          <div class="text-3xl font-bold gold-text" style="font-family:'Syne',sans-serif;" id="cd-hours">00</div>
+          <div class="text-xs text-gray-500 mt-1">Hours</div>
+        </div>
+        <div class="countdown-box">
+          <div class="text-3xl font-bold gold-text" style="font-family:'Syne',sans-serif;" id="cd-mins">00</div>
+          <div class="text-xs text-gray-500 mt-1">Minutes</div>
+        </div>
+        <div class="countdown-box">
+          <div class="text-3xl font-bold gold-text" style="font-family:'Syne',sans-serif;" id="cd-secs">00</div>
+          <div class="text-xs text-gray-500 mt-1">Seconds</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pricing card -->
+    <div class="card p-8 md:p-12 text-center relative overflow-hidden reveal" style="border-color:rgba(245,200,66,0.4)">
+      <div class="absolute top-0 left-0 w-full h-1" style="background:linear-gradient(90deg,#f5c842,#e0a800)"></div>
+      <div class="badge inline-block mb-4">Most Popular</div>
+      <h3 class="text-2xl font-bold text-white mb-2">Complete Bundle</h3>
+      <p class="text-gray-400 mb-8">All products + future updates included</p>
+
+      <div class="flex items-center justify-center gap-4 mb-2">
+        <span class="text-gray-500 line-through text-2xl">₹8,497</span>
+        <span class="text-6xl font-bold gold-text" style="font-family:'Syne',sans-serif;" id="display-price">₹1,999</span>
+      </div>
+      <p class="text-green-400 text-sm font-medium mb-8">You save ₹6,498 (77% off!)</p>
+
+      <ul class="text-left max-w-sm mx-auto mb-10 space-y-3">
+        <li class="flex items-center gap-3 text-gray-300"><span class="gold-text">✓</span> Ultimate Business Templates (₹999 value)</li>
+        <li class="flex items-center gap-3 text-gray-300"><span class="gold-text">✓</span> Design Assets Mega Pack (₹3,499 value)</li>
+        <li class="flex items-center gap-3 text-gray-300"><span class="gold-text">✓</span> Growth Hacking Playbook (₹1,999 value)</li>
+        <li class="flex items-center gap-3 text-gray-300"><span class="gold-text">✓</span> Free lifetime updates</li>
+        <li class="flex items-center gap-3 text-gray-300"><span class="gold-text">✓</span> Instant download access</li>
+        <li class="flex items-center gap-3 text-gray-300"><span class="gold-text">✓</span> 7-day money-back guarantee</li>
+      </ul>
+
+      <button onclick="openPaymentModal()" class="gold-btn pulse-glow w-full max-w-sm py-5 rounded-full text-lg">
+        Buy Now — ₹<span id="btn-price">1,999</span>
+      </button>
+      <p class="text-gray-600 text-xs mt-4">🔒 Secure payment via Razorpay · Instant delivery to email</p>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section id="testimonials" class="py-20 px-6" style="background:rgba(245,200,66,0.02)">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-14 reveal">
+      <h2 class="text-4xl font-bold text-white mb-4">What Customers Say</h2>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="card p-6 reveal">
+        <div class="stars text-lg mb-3">★★★★★</div>
+        <p class="text-gray-300 text-sm mb-5">"Best investment I made this year. The templates saved me 40+ hours of work. Highly recommended!"</p>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm" style="background:linear-gradient(135deg,#f5c842,#e0a800);color:#0a0a0f">RK</div>
+          <div>
+            <div class="text-white text-sm font-semibold">Rahul Kumar</div>
+            <div class="text-gray-500 text-xs">Freelance Designer</div>
+          </div>
+        </div>
+      </div>
+      <div class="card p-6 reveal">
+        <div class="stars text-lg mb-3">★★★★★</div>
+        <p class="text-gray-300 text-sm mb-5">"The growth playbook alone is worth 10x the price. My startup grew from 0 to 5k users in 3 months!"</p>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff">PS</div>
+          <div>
+            <div class="text-white text-sm font-semibold">Priya Sharma</div>
+            <div class="text-gray-500 text-xs">Startup Founder</div>
+          </div>
+        </div>
+      </div>
+      <div class="card p-6 reveal">
+        <div class="stars text-lg mb-3">★★★★★</div>
+        <p class="text-gray-300 text-sm mb-5">"Instant download worked perfectly. Quality is exceptional. Will definitely buy again!"</p>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm" style="background:linear-gradient(135deg,#10b981,#065f46);color:#fff">AM</div>
+          <div>
+            <div class="text-white text-sm font-semibold">Arjun Mehta</div>
+            <div class="text-gray-500 text-xs">Digital Marketer</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="py-20 px-6">
+  <div class="max-w-3xl mx-auto">
+    <div class="text-center mb-14 reveal">
+      <h2 class="text-4xl font-bold text-white mb-4">Frequently Asked Questions</h2>
+    </div>
+    <div class="space-y-3">
+      <details class="faq-item card p-6 reveal">
+        <summary class="flex items-center justify-between font-semibold text-white">
+          How do I get my download after payment?
+          <span class="arrow gold-text text-lg">↓</span>
+        </summary>
+        <p class="text-gray-400 text-sm mt-4">After successful payment, you'll receive an email with a secure download link within minutes. You have lifetime access to your download.</p>
+      </details>
+      <details class="faq-item card p-6 reveal">
+        <summary class="flex items-center justify-between font-semibold text-white">
+          Can I use these products for clients?
+          <span class="arrow gold-text text-lg">↓</span>
+        </summary>
+        <p class="text-gray-400 text-sm mt-4">Yes! You get a commercial license to use all products for personal and client projects. No attribution needed.</p>
+      </details>
+      <details class="faq-item card p-6 reveal">
+        <summary class="flex items-center justify-between font-semibold text-white">
+          What payment methods are accepted?
+          <span class="arrow gold-text text-lg">↓</span>
+        </summary>
+        <p class="text-gray-400 text-sm mt-4">We accept all major credit/debit cards, UPI, net banking, and wallets via Razorpay — India's most trusted payment gateway.</p>
+      </details>
+      <details class="faq-item card p-6 reveal">
+        <summary class="flex items-center justify-between font-semibold text-white">
+          Is there a refund policy?
+          <span class="arrow gold-text text-lg">↓</span>
+        </summary>
+        <p class="text-gray-400 text-sm mt-4">Yes! We offer a 7-day no-questions-asked refund policy. Just email us and we'll process your refund within 24 hours.</p>
+      </details>
+      <details class="faq-item card p-6 reveal">
+        <summary class="flex items-center justify-between font-semibold text-white">
+          Do I get future updates?
+          <span class="arrow gold-text text-lg">↓</span>
+        </summary>
+        <p class="text-gray-400 text-sm mt-4">Absolutely! All future updates and new products added to the bundle are free for existing customers forever.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="py-12 px-6 border-t" style="border-color:var(--border)">
+  <div class="max-w-6xl mx-auto">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+      <div>
+        <div class="text-2xl font-bold gold-text mb-3" style="font-family:'Syne',sans-serif;">DigitalVault</div>
+        <p class="text-gray-500 text-sm">Premium digital products for modern entrepreneurs and creators.</p>
+      </div>
+      <div>
+        <div class="font-semibold text-white mb-3">Quick Links</div>
+        <div class="space-y-2 text-sm text-gray-500">
+          <a href="my-orders.html" class="block hover:text-yellow-400 transition">My Downloads</a>
+          <a href="#products" class="block hover:text-yellow-400 transition">Products</a>
+          <a href="#pricing" class="block hover:text-yellow-400 transition">Pricing</a>
+          <a href="#faq" class="block hover:text-yellow-400 transition">FAQ</a>
+          <a href="admin/login.html" class="block hover:text-yellow-400 transition">Admin Login</a>
+        </div>
+      </div>
+      <div>
+        <div class="font-semibold text-white mb-3">Contact</div>
+        <div class="space-y-2 text-sm text-gray-500">
+          <p>📧 support@digitalvault.in</p>
+          <p>📱 +91 98765 43210</p>
+          <p>🕐 Mon–Sat, 10am–6pm IST</p>
+        </div>
+      </div>
+    </div>
+    <div class="border-t pt-6 flex flex-col md:flex-row items-center justify-between text-xs text-gray-600" style="border-color:var(--border)">
+      <p>© 2025 DigitalVault. All rights reserved.</p>
+      <p class="mt-2 md:mt-0">Payments secured by Razorpay 🔒</p>
+    </div>
+  </div>
+</footer>
+
+<!-- PAYMENT MODAL -->
+<div id="payment-modal" class="fixed inset-0 z-50 flex items-center justify-center px-4" style="display:none!important;background:rgba(0,0,0,0.8);backdrop-filter:blur(10px)">
+  <div class="card w-full max-w-md p-8 relative">
+    <button onclick="closePaymentModal()" class="absolute top-4 right-4 text-gray-500 hover:text-white text-xl">✕</button>
+    <h3 class="text-xl font-bold text-white mb-6" style="font-family:'Syne',sans-serif;">Complete Your Order</h3>
+    <div class="space-y-4">
+      <div>
+        <label class="text-xs text-gray-400 mb-1 block">Full Name *</label>
+        <input id="pay-name" type="text" placeholder="Your name" class="w-full px-4 py-3 rounded-xl text-white text-sm outline-none" style="background:#1a1a2a;border:1px solid rgba(255,255,255,0.1)" />
+      </div>
+      <div>
+        <label class="text-xs text-gray-400 mb-1 block">Email *</label>
+        <input id="pay-email" type="email" placeholder="your@email.com" class="w-full px-4 py-3 rounded-xl text-sm outline-none" style="background:#1a1a2a;border:1px solid rgba(255,255,255,0.1);color:#ffffff;" />
+      </div>
+      <div>
+        <label class="text-xs text-gray-400 mb-1 block">Phone *</label>
+        <input id="pay-phone" type="tel" placeholder="10-digit mobile number" maxlength="10" class="w-full px-4 py-3 rounded-xl text-white text-sm outline-none" style="background:#1a1a2a;border:1px solid rgba(255,255,255,0.1)" />
+      </div>
+      <div id="pay-error" class="text-red-400 text-xs hidden"></div>
+      <button onclick="initiatePayment()" class="gold-btn w-full py-4 rounded-xl text-base mt-2">
+        Pay ₹<span id="modal-price">1,999</span> →
+      </button>
+      <p class="text-gray-600 text-xs text-center">🔒 Secured by Razorpay. Your data is safe.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:5000'; // Change to your server URL
+
+// Mobile menu
+function toggleMobileMenu() {
+  const menu = document.getElementById('mobile-menu');
+  menu.classList.toggle('open');
+}
+
+function scrollToPricing() {
+  document.getElementById('pricing').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Countdown Timer (24 hours from first visit)
+function startCountdown() {
+  let key = 'dv_deadline';
+  let deadline = localStorage.getItem(key);
+  if (!deadline) {
+    deadline = Date.now() + 24 * 60 * 60 * 1000;
+    localStorage.setItem(key, deadline);
+  }
+  setInterval(() => {
+    const diff = deadline - Date.now();
+    if (diff <= 0) { document.getElementById('cd-hours').textContent = '00'; document.getElementById('cd-mins').textContent = '00'; document.getElementById('cd-secs').textContent = '00'; return; }
+    const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
+    const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
+    const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+    document.getElementById('cd-hours').textContent = h;
+    document.getElementById('cd-mins').textContent = m;
+    document.getElementById('cd-secs').textContent = s;
+  }, 1000);
+}
+
+// Animate stat counter
+function animateCounter(el, target, duration = 2000) {
+  let start = 0;
+  const step = target / (duration / 16);
+  const timer = setInterval(() => {
+    start += step;
+    if (start >= target) { el.textContent = target.toLocaleString() + '+'; clearInterval(timer); }
+    else el.textContent = Math.floor(start).toLocaleString() + '+';
+  }, 16);
+}
+
+// Load product pricing from API
+// Gradients and emojis for product cards
+const cardStyles = [
+  { bg: 'linear-gradient(135deg,#1a1a2e,#16213e)', emoji: '📦' },
+  { bg: 'linear-gradient(135deg,#0f3460,#533483)', emoji: '🎨' },
+  { bg: 'linear-gradient(135deg,#134e4a,#065f46)', emoji: '📈' },
+  { bg: 'linear-gradient(135deg,#3b1f2b,#7b2d42)', emoji: '🚀' },
+  { bg: 'linear-gradient(135deg,#1a2a1a,#2d5a27)', emoji: '💡' },
+  { bg: 'linear-gradient(135deg,#1a1a3e,#2d2d7a)', emoji: '⚡' },
+];
+const badges = ['Bestseller', 'Hot', 'New', 'Popular', 'Trending', 'Must Have'];
+
+async function loadProducts() {
+  const grid = document.getElementById('products-grid');
+  try {
+    const res = await fetch(`${API}/product`);
+    const data = await res.json();
+
+    if (!data.flag || !data.products || data.products.length === 0) {
+      grid.innerHTML = '<p class="text-gray-500 col-span-3 text-center py-10">Products coming soon...</p>';
+      return;
+    }
+
+    // Update pricing section with first product
+    const first = data.products[0];
+    const salePrice = first.sale_price || first.discounted_price || 1999;
+    const origPrice = first.original_price || 8497;
+    document.getElementById('display-price').textContent = '₹' + salePrice.toLocaleString();
+    document.getElementById('btn-price').textContent = salePrice.toLocaleString();
+    document.getElementById('modal-price').textContent = salePrice.toLocaleString();
+
+    // Render product cards
+    grid.innerHTML = data.products.map((p, i) => {
+      const style = cardStyles[i % cardStyles.length];
+      const badge = badges[i % badges.length];
+      const sale = p.sale_price || p.discounted_price || 0;
+      const orig = p.original_price || 0;
+      const rawDesc = p.description ? p.description.replace(/<[^>]*>/g, '') : '';
+      const desc = rawDesc.length > 100 ? rawDesc.substring(0, 100) + '...' : rawDesc || 'Premium digital product — instant download after purchase.';
+      const imageHtml = (p.images && p.images.length > 0)
+        ? `<img src="http://localhost:5000${p.images[0]}" alt="${p.name}" style="width:100%;height:176px;object-fit:cover;border-radius:12px;margin-bottom:20px;" onerror="this.outerHTML='<div style=&quot;width:100%;height:176px;border-radius:12px;margin-bottom:20px;background:${style.bg};display:flex;align-items:center;justify-content:center;font-size:3rem;&quot;>${style.emoji}</div>'"/>`
+        : `<div style="width:100%;height:176px;border-radius:12px;margin-bottom:20px;background:${style.bg};display:flex;align-items:center;justify-content:center;font-size:3rem;">${style.emoji}</div>`;
+      return `
+        <div class="card p-6 reveal" style="display:flex;flex-direction:column;cursor:pointer;" onclick="window.open('product.html?id=${p._id}','_blank')">
+          ${imageHtml}
+          <div class="badge mb-3">${badge}</div>
+          <h3 class="text-xl font-bold text-white mb-2">${p.name}</h3>
+          <p class="text-gray-400 text-sm mb-4" style="flex:1">${desc}</p>
+          <div class="flex items-center justify-between mt-auto">
+            <div class="flex items-center gap-3">
+              <span class="text-yellow-400 font-bold text-lg">₹${sale.toLocaleString()}</span>
+              ${orig ? `<span class="text-gray-600 line-through text-sm">₹${orig.toLocaleString()}</span>` : ''}
+            </div>
+            <div class="flex gap-2">
+              <button onclick="event.stopPropagation();addToCartFromIndex('${p._id}','${p.name.replace(/'/g,"\\'")}',${sale},${orig},'${p.images && p.images.length > 0 ? p.images[0] : ''}')" class="px-3 py-2 rounded-full text-xs font-bold transition" style="background:rgba(245,200,66,0.1);border:1px solid rgba(245,200,66,0.3);color:#f5c842;" title="Add to Cart">🛒</button>
+              <button onclick="event.stopPropagation();openPaymentModal('${p._id}', ${sale})" class="gold-btn px-4 py-2 rounded-full text-sm">Buy Now →</button>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+    // Re-apply scroll observer to new cards
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  } catch(e) {
+    grid.innerHTML = '<p class="text-gray-500 col-span-3 text-center py-10">Could not load products.</p>';
+  }
+}
+
+// Load stats
+async function loadStats() {
+  try {
+    const res = await fetch(`${API}/order/stats`);
+    const data = await res.json();
+    if (data.flag) animateCounter(document.getElementById('stat-sales'), data.totalSales || 1247);
+    else animateCounter(document.getElementById('stat-sales'), 1247);
+  } catch(e) { animateCounter(document.getElementById('stat-sales'), 1247); }
+}
+
+// Payment Modal
+let selectedProductId = null;
+let selectedProductPrice = null;
+
+function openPaymentModal(product_id, price) {
+  selectedProductId = product_id || null;
+  selectedProductPrice = price || null;
+
+  // Show correct price in modal
+  if (price) {
+    document.getElementById('modal-price').textContent = Number(price).toLocaleString();
+  }
+
+  const modal = document.getElementById('payment-modal');
+  modal.style.setProperty('display', 'flex', 'important');
+}
+function closePaymentModal() {
+  const modal = document.getElementById('payment-modal');
+  modal.style.setProperty('display', 'none', 'important');
+}
+
+async function initiatePayment() {
+  const name = document.getElementById('pay-name').value.trim();
+  const email = document.getElementById('pay-email').value.trim();
+  const phone = document.getElementById('pay-phone').value.trim();
+  const errEl = document.getElementById('pay-error');
+
+  if (!name || !email || !phone) { errEl.textContent = 'Please fill all fields.'; errEl.classList.remove('hidden'); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errEl.textContent = 'Enter a valid email.'; errEl.classList.remove('hidden'); return; }
+  if (!/^\d{10}$/.test(phone)) { errEl.textContent = 'Enter a valid 10-digit phone number.'; errEl.classList.remove('hidden'); return; }
+  errEl.classList.add('hidden');
+
+  try {
+    const res = await fetch(`${API}/order/create`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, phone, product_id: selectedProductId })
+    });
+    const data = await res.json();
+    if (!data.flag) { errEl.textContent = data.message || 'Error creating order.'; errEl.classList.remove('hidden'); return; }
+
+    // FREE MODE — No Razorpay, direct download
+    if (data.mode === 'free') {
+      closePaymentModal();
+      window.location.href = `download.html?token=${data.download_token}`;
+      return;
+    }
+
+    // RAZORPAY MODE
+    const options = {
+      key: data.razorpay_key,
+      amount: data.amount,
+      currency: 'INR',
+      name: 'DigitalVault',
+      description: 'Complete Digital Bundle',
+      order_id: data.razorpay_order_id,
+      prefill: { name, email, contact: phone },
+      theme: { color: '#f5c842' },
+      handler: async function(response) {
+        const verRes = await fetch(`${API}/order/payment-success`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ razorpay_response: response, order_id: data.order_id, email })
+        });
+        const verData = await verRes.json();
+        if (verData.flag) {
+          // Get current base URL (works with Live Server and hosting both)
+          const base = window.location.href.replace(/\/[^\/]*$/, '');
+          window.location.href = `${base}/download.html?token=${verData.download_token}`;
+        } else {
+          errEl.textContent = 'Payment verification failed. Contact support.';
+          errEl.classList.remove('hidden');
+        }
+      }
+    };
+    closePaymentModal();
+    const rzp = new Razorpay(options);
+    rzp.open();
+  } catch(e) {
+    errEl.textContent = 'Network error. Please try again.';
+    errEl.classList.remove('hidden');
+  }
+}
+
+// Scroll reveal
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// Cart functions
+function updateNavCartCount() {
+  const cart = JSON.parse(localStorage.getItem('dv_cart') || '[]');
+  const count = cart.reduce((s, i) => s + i.qty, 0);
+  const badge = document.getElementById('nav-cart-count');
+  if (badge) {
+    if (count > 0) { badge.textContent = count; badge.classList.remove('hidden'); }
+    else badge.classList.add('hidden');
+  }
+}
+
+function addToCartFromIndex(id, name, price, origPrice, image) {
+  const cart = JSON.parse(localStorage.getItem('dv_cart') || '[]');
+  const existing = cart.find(i => i.id === id);
+  if (existing) {
+    showIndexToast('Already in cart! 🛒');
+    return;
+  }
+  cart.push({ id, name, price, orig_price: origPrice, image: image || null, qty: 1 });
+  localStorage.setItem('dv_cart', JSON.stringify(cart));
+  updateNavCartCount();
+  showIndexToast('Added to cart! 🎉');
+}
+
+function showIndexToast(msg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:999;padding:12px 20px;border-radius:12px;font-size:0.9rem;font-weight:600;background:#10b981;color:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.3);transition:all 0.3s;';
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 2000);
+}
+
+// Init
+startCountdown();
+loadProducts();
+loadStats();
+updateNavCartCount();
+</script>
+</body>
+</html>

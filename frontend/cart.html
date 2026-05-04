@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cart – DigitalVault</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root { --gold: #f5c842; --dark: #0a0a0f; --card: #12121a; --border: rgba(245,200,66,0.15); }
+    body { font-family: 'DM Sans', sans-serif; background: var(--dark); color: #e8e8f0; min-height: 100vh; }
+    h1,h2,h3 { font-family: 'Syne', sans-serif; }
+    .gold-text { color: var(--gold); }
+    .gold-btn { background: linear-gradient(135deg,#f5c842,#e0a800); color: #0a0a0f; font-family: 'Syne',sans-serif; font-weight: 700; border: none; cursor: pointer; transition: all 0.3s; }
+    .gold-btn:hover { box-shadow: 0 0 30px rgba(245,200,66,0.4); transform: translateY(-2px); }
+    nav { background: rgba(10,10,15,0.9); border-bottom: 1px solid var(--border); backdrop-filter: blur(20px); }
+    .cart-item { background: #12121a; border: 1px solid rgba(245,200,66,0.1); border-radius: 14px; padding: 16px; transition: border-color 0.2s; }
+    .cart-item:hover { border-color: rgba(245,200,66,0.25); }
+    .inp { background: #1a1a2a; border: 1px solid rgba(255,255,255,0.08); color: white; outline: none; }
+    .inp:focus { border-color: rgba(245,200,66,0.4); }
+    .cart-badge { position: absolute; top: -6px; right: -6px; background: #f5c842; color: #0a0a0f; font-size: 10px; font-weight: 700; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="px-6 py-4 sticky top-0 z-10">
+  <div class="max-w-6xl mx-auto flex items-center justify-between">
+    <a href="index.html" class="text-xl font-bold gold-text">DigitalVault</a>
+    <div class="flex items-center gap-4">
+      <a href="index.html" class="text-sm text-gray-400 hover:text-white transition">← Continue Shopping</a>
+      <a href="cart.html" class="relative text-yellow-400">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+        <span id="cart-count-nav" class="cart-badge hidden">0</span>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<div class="max-w-6xl mx-auto px-6 py-10">
+  <h1 class="text-3xl font-bold text-white mb-8">🛒 Your Cart</h1>
+
+  <!-- Empty Cart -->
+  <div id="empty-cart" class="hidden text-center py-20">
+    <div class="text-6xl mb-6">🛒</div>
+    <h2 class="text-2xl font-bold text-white mb-3">Your cart is empty!</h2>
+    <p class="text-gray-400 mb-8">Add some products to get started.</p>
+    <a href="index.html" class="gold-btn px-8 py-4 rounded-full text-base inline-block">Browse Products →</a>
+  </div>
+
+  <!-- Cart Content -->
+  <div id="cart-content" class="hidden">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+      <!-- Left — Cart Items -->
+      <div class="lg:col-span-2 space-y-4" id="cart-items-list"></div>
+
+      <!-- Right — Order Summary -->
+      <div class="lg:col-span-1">
+        <div style="background:#12121a;border:1px solid rgba(245,200,66,0.15);border-radius:16px;padding:24px;position:sticky;top:100px;">
+          <h3 class="text-lg font-bold text-white mb-6">Order Summary</h3>
+
+          <div class="space-y-3 mb-6 text-sm">
+            <div class="flex justify-between text-gray-400">
+              <span>Subtotal (<span id="item-count">0</span> items)</span>
+              <span class="text-white">₹<span id="subtotal">0</span></span>
+            </div>
+            <div class="flex justify-between text-gray-400">
+              <span>Original Price</span>
+              <span class="line-through">₹<span id="original-total">0</span></span>
+            </div>
+            <div class="flex justify-between text-green-400 font-semibold">
+              <span>You Save</span>
+              <span>₹<span id="savings">0</span></span>
+            </div>
+            <div class="border-t pt-3 mt-3" style="border-color:rgba(255,255,255,0.08)">
+              <div class="flex justify-between text-white font-bold text-lg">
+                <span>Total</span>
+                <span class="gold-text">₹<span id="total-price">0</span></span>
+              </div>
+            </div>
+          </div>
+
+          <button onclick="openCheckout()" class="gold-btn w-full py-4 rounded-xl text-base mb-3">
+            Proceed to Checkout →
+          </button>
+          <a href="index.html" class="block text-center text-sm text-gray-500 hover:text-yellow-400 transition">
+            ← Continue Shopping
+          </a>
+
+          <!-- Trust badges -->
+          <div class="mt-6 pt-6 border-t space-y-2" style="border-color:rgba(255,255,255,0.06)">
+            <div class="flex items-center gap-2 text-xs text-gray-500"><span>🔒</span> Secure Razorpay Payment</div>
+            <div class="flex items-center gap-2 text-xs text-gray-500"><span>⚡</span> Instant Download After Payment</div>
+            <div class="flex items-center gap-2 text-xs text-gray-500"><span>💰</span> 7-Day Money Back Guarantee</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="checkout-modal" class="fixed inset-0 z-50" style="display:none;background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);align-items:center;justify-content:center;">
+  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#12121a;border:1px solid rgba(245,200,66,0.25);border-radius:20px;width:90%;max-width:480px;padding:36px;box-shadow:0 0 60px rgba(245,200,66,0.1);">
+    <div style="position:absolute;top:0;left:0;width:100%;height:3px;background:linear-gradient(90deg,#f5c842,#e0a800);border-radius:20px 20px 0 0;"></div>
+    <button onclick="closeCheckout()" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#9ca3af;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;">✕</button>
+    <h3 style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700;color:#fff;margin-bottom:6px;">Complete Your Order</h3>
+    <p style="color:#6b7280;font-size:0.85rem;margin-bottom:24px;">Total: <span style="color:#f5c842;font-weight:700;font-size:1.1rem;">₹<span id="modal-total">0</span></span></p>
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div>
+        <label style="font-size:0.7rem;color:#9ca3af;display:block;margin-bottom:4px;font-weight:600;">Full Name *</label>
+        <input id="co-name" type="text" placeholder="Your name" style="width:100%;background:#1a1a2a;border:1px solid rgba(255,255,255,0.08);color:#fff;padding:12px 16px;border-radius:12px;font-size:0.875rem;outline:none;"/>
+      </div>
+      <div>
+        <label style="font-size:0.7rem;color:#9ca3af;display:block;margin-bottom:4px;font-weight:600;">Email *</label>
+        <input id="co-email" type="email" placeholder="your@email.com" style="width:100%;background:#1a1a2a;border:1px solid rgba(255,255,255,0.08);color:#fff;padding:12px 16px;border-radius:12px;font-size:0.875rem;outline:none;"/>
+      </div>
+      <div>
+        <label style="font-size:0.7rem;color:#9ca3af;display:block;margin-bottom:4px;font-weight:600;">Phone *</label>
+        <input id="co-phone" type="tel" placeholder="10-digit number" maxlength="10" style="width:100%;background:#1a1a2a;border:1px solid rgba(255,255,255,0.08);color:#fff;padding:12px 16px;border-radius:12px;font-size:0.875rem;outline:none;"/>
+      </div>
+      <div id="co-error" style="color:#ef4444;font-size:0.75rem;display:none;"></div>
+      <button onclick="processCartPayment()" style="background:linear-gradient(135deg,#f5c842,#e0a800);color:#0a0a0f;font-family:'Syne',sans-serif;font-weight:700;padding:16px;border-radius:12px;border:none;cursor:pointer;font-size:1rem;width:100%;margin-top:4px;">
+        Pay ₹<span id="co-pay-amount">0</span> →
+      </button>
+      <p style="color:#4b5563;font-size:0.7rem;text-align:center;">🔒 Secured by Razorpay · Instant delivery</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:5000';
+let cartItems = [];
+
+function getCart() {
+  return JSON.parse(localStorage.getItem('dv_cart') || '[]');
+}
+function saveCart(cart) {
+  localStorage.setItem('dv_cart', JSON.stringify(cart));
+}
+
+function updateCartCount() {
+  const cart = getCart();
+  const count = cart.reduce((s, i) => s + i.qty, 0);
+  const badge = document.getElementById('cart-count-nav');
+  if (count > 0) { badge.textContent = count; badge.classList.remove('hidden'); }
+  else badge.classList.add('hidden');
+}
+
+function removeItem(id) {
+  const cart = getCart().filter(i => i.id !== id);
+  saveCart(cart);
+  renderCart();
+}
+
+function calcTotals(cart) {
+  const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  const origTotal = cart.reduce((s, i) => s + (i.orig_price || i.price) * i.qty, 0);
+  return { subtotal, origTotal, savings: origTotal - subtotal };
+}
+
+function renderCart() {
+  cartItems = getCart();
+  updateCartCount();
+
+  if (cartItems.length === 0) {
+    document.getElementById('empty-cart').classList.remove('hidden');
+    document.getElementById('cart-content').classList.add('hidden');
+    return;
+  }
+
+  document.getElementById('empty-cart').classList.add('hidden');
+  document.getElementById('cart-content').classList.remove('hidden');
+
+  const { subtotal, origTotal, savings } = calcTotals(cartItems);
+  document.getElementById('item-count').textContent = cartItems.length;
+  document.getElementById('subtotal').textContent = subtotal.toLocaleString();
+  document.getElementById('original-total').textContent = origTotal.toLocaleString();
+  document.getElementById('savings').textContent = savings.toLocaleString();
+  document.getElementById('total-price').textContent = subtotal.toLocaleString();
+  document.getElementById('modal-total').textContent = subtotal.toLocaleString();
+  document.getElementById('co-pay-amount').textContent = subtotal.toLocaleString();
+
+  const list = document.getElementById('cart-items-list');
+  list.innerHTML = cartItems.map(item => `
+    <div class="cart-item flex items-center gap-4">
+      <!-- Image -->
+      <div style="width:90px;height:90px;flex-shrink:0;border-radius:10px;overflow:hidden;background:#1a1a2a;border:1px solid rgba(255,255,255,0.06);">
+        ${item.image
+          ? `<img src="${API}${item.image}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='<div style=&quot;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:2rem;&quot;>📦</div>'"/>`
+          : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:2rem;">📦</div>`
+        }
+      </div>
+
+      <!-- Info -->
+      <div class="flex-1 min-w-0">
+        <h3 class="font-bold text-white truncate">${item.name}</h3>
+        <p class="text-xs text-gray-500 mt-1">Digital Product · Instant Download</p>
+        <div class="flex items-center gap-3 mt-2">
+          <span class="text-yellow-400 font-bold">₹${item.price.toLocaleString()}</span>
+          ${item.orig_price && item.orig_price > item.price ? `<span class="text-gray-600 line-through text-sm">₹${item.orig_price.toLocaleString()}</span>` : ''}
+        </div>
+      </div>
+
+      <!-- Remove -->
+      <button onclick="removeItem('${item.id}')" class="text-gray-600 hover:text-red-400 transition p-2 rounded-lg" style="flex-shrink:0;" title="Remove">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      </button>
+    </div>
+  `).join('');
+}
+
+// Checkout
+function openCheckout() {
+  const { subtotal } = calcTotals(getCart());
+  document.getElementById('modal-total').textContent = subtotal.toLocaleString();
+  document.getElementById('co-pay-amount').textContent = subtotal.toLocaleString();
+  const modal = document.getElementById('checkout-modal');
+  modal.style.display = 'block';
+}
+function closeCheckout() {
+  document.getElementById('checkout-modal').style.display = 'none';
+}
+
+async function processCartPayment() {
+  const name = document.getElementById('co-name').value.trim();
+  const email = document.getElementById('co-email').value.trim();
+  const phone = document.getElementById('co-phone').value.trim();
+  const errEl = document.getElementById('co-error');
+
+  if (!name || !email || !phone) { errEl.textContent = 'Please fill all fields.'; errEl.classList.remove('hidden'); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errEl.textContent = 'Valid email required.'; errEl.classList.remove('hidden'); return; }
+  if (!/^\d{10}$/.test(phone)) { errEl.textContent = 'Valid 10-digit phone required.'; errEl.classList.remove('hidden'); return; }
+  errEl.classList.add('hidden');
+
+  const cart = getCart();
+  const { subtotal } = calcTotals(cart);
+
+  try {
+    // Cart ke liye multiple products — pehle product ki ID use karo
+    // (ek se zyada products hone par ek ek payment create karo)
+    const results = [];
+
+    for (const item of cart) {
+      const res = await fetch(`${API}/order/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, phone, product_id: item.id })
+      });
+      const data = await res.json();
+      if (data.flag) results.push(data);
+    }
+
+    if (results.length === 0) { errEl.textContent = 'Error creating order.'; errEl.classList.remove('hidden'); return; }
+
+    // Agar ek product hai
+    if (results.length === 1) {
+      const data = results[0];
+      closeCheckout();
+      const rzp = new Razorpay({
+        key: data.razorpay_key,
+        amount: data.amount,
+        currency: 'INR',
+        name: 'DigitalVault',
+        description: cart[0].name,
+        order_id: data.razorpay_order_id,
+        prefill: { name, email, contact: phone },
+        theme: { color: '#f5c842' },
+        handler: async function(response) {
+          const verRes = await fetch(`${API}/order/payment-success`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ razorpay_response: response, order_id: data.order_id, email })
+          });
+          const verData = await verRes.json();
+          if (verData.flag) {
+            localStorage.removeItem('dv_cart');
+            window.location.href = `download.html?token=${verData.download_token}`;
+          }
+        }
+      });
+      rzp.open();
+    } else {
+      // Multiple products — ek combined order route use karo
+      closeCheckout();
+      const data = results[0];
+      const rzp = new Razorpay({
+        key: data.razorpay_key,
+        amount: subtotal * 100,
+        currency: 'INR',
+        name: 'DigitalVault',
+        description: `${cart.length} Products`,
+        order_id: data.razorpay_order_id,
+        prefill: { name, email, contact: phone },
+        theme: { color: '#f5c842' },
+        handler: async function(response) {
+          // Sabke orders confirm karo
+          for (const r of results) {
+            await fetch(`${API}/order/payment-success`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ razorpay_response: response, order_id: r.order_id, email })
+            });
+          }
+          localStorage.removeItem('dv_cart');
+          window.location.href = `my-orders.html`;
+        }
+      });
+      rzp.open();
+    }
+  } catch(e) {
+    errEl.textContent = 'Network error. Try again.';
+    errEl.classList.remove('hidden');
+  }
+}
+
+// Init
+renderCart();
+</script>
+</body>
+</html>
