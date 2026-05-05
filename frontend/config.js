@@ -7,7 +7,7 @@ const Config = {
 //  API: 'https://digitalshop-e6xr.onrender.com/'
   API: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
-    : window.__DV_API_URL__ || '', // Production mein server se inject hoga
+    : window.__DV_API_URL__ || 'https://digitalvault-on6w.onrender.com/', // Production mein server se inject hoga
 
   // App Name
   APP_NAME: 'DigitalVault',
