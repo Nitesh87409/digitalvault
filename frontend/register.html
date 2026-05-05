@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register – DigitalVault</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="config.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: #0a0a0f; color: #e8e8f0; min-height: 100vh; display: flex; flex-direction: column; }
+    h1,h2,h3 { font-family: 'Syne', sans-serif; }
+    .gold-text { color: #f5c842; }
+    .gold-btn { background: linear-gradient(135deg,#f5c842,#e0a800); color: #0a0a0f; font-family: 'Syne',sans-serif; font-weight: 700; border: none; cursor: pointer; transition: all 0.3s; width: 100%; padding: 14px; border-radius: 12px; font-size: 1rem; }
+    .gold-btn:hover { box-shadow: 0 0 30px rgba(245,200,66,0.4); }
+    .gold-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .inp { background: #1a1a2a; border: 1px solid rgba(255,255,255,0.08); color: #fff; outline: none; width: 100%; padding: 14px 16px; border-radius: 12px; font-size: 0.9rem; transition: border-color 0.2s; font-family: 'DM Sans', sans-serif; }
+    .inp:focus { border-color: rgba(245,200,66,0.5); }
+    .inp::placeholder { color: #4b5563; }
+    .card { background: #12121a; border: 1px solid rgba(245,200,66,0.15); border-radius: 20px; padding: 36px; width: 100%; max-width: 440px; }
+    .blob { position: fixed; border-radius: 50%; filter: blur(100px); opacity: 0.08; pointer-events: none; z-index: 0; }
+    .strength-bar { height: 4px; border-radius: 2px; transition: all 0.3s; }
+  </style>
+</head>
+<body>
+
+<div class="blob w-96 h-96 bg-yellow-400" style="top:-100px;right:-100px;"></div>
+<div class="blob w-80 h-80 bg-purple-600" style="bottom:-80px;left:-80px;"></div>
+
+<!-- NAV -->
+<nav style="background:rgba(10,10,15,0.9);border-bottom:1px solid rgba(245,200,66,0.1);backdrop-filter:blur(20px);padding:16px 24px;position:sticky;top:0;z-index:10;">
+  <div style="max-width:1152px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;">
+    <a href="index.html" class="text-xl font-bold gold-text">DigitalVault</a>
+    <a href="index.html" style="color:#6b7280;font-size:0.875rem;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#6b7280'">← Back to Store</a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div style="flex:1;display:flex;align-items:center;justify-content:center;padding:40px 16px;position:relative;z-index:1;">
+  <div class="card">
+    <!-- Header -->
+    <div style="text-align:center;margin-bottom:28px;">
+      <div style="font-size:2.5rem;margin-bottom:12px;">🚀</div>
+      <h2 style="font-size:1.6rem;font-weight:700;color:#fff;margin-bottom:6px;">Create Account</h2>
+      <p style="color:#6b7280;font-size:0.875rem;">Join DigitalVault and get instant access</p>
+    </div>
+
+    <!-- Form -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div>
+        <label style="font-size:0.75rem;color:#9ca3af;display:block;margin-bottom:6px;font-weight:600;">Full Name</label>
+        <input id="name" type="text" class="inp" placeholder="Your full name"/>
+      </div>
+      <div>
+        <label style="font-size:0.75rem;color:#9ca3af;display:block;margin-bottom:6px;font-weight:600;">Email Address</label>
+        <input id="email" type="email" class="inp" placeholder="your@email.com"/>
+      </div>
+      <div>
+        <label style="font-size:0.75rem;color:#9ca3af;display:block;margin-bottom:6px;font-weight:600;">Phone Number</label>
+        <input id="phone" type="tel" class="inp" placeholder="10-digit mobile number" maxlength="10"/>
+      </div>
+      <div>
+        <label style="font-size:0.75rem;color:#9ca3af;display:block;margin-bottom:6px;font-weight:600;">Password</label>
+        <div style="position:relative;">
+          <input id="password" type="password" class="inp" placeholder="Min 6 characters" style="padding-right:48px;" oninput="checkStrength()"/>
+          <button onclick="togglePass()" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#6b7280;">👁</button>
+        </div>
+        <!-- Password strength -->
+        <div style="margin-top:8px;display:flex;gap:4px;" id="strength-bars">
+          <div class="strength-bar flex-1" id="bar1" style="background:#1a1a2a;"></div>
+          <div class="strength-bar flex-1" id="bar2" style="background:#1a1a2a;"></div>
+          <div class="strength-bar flex-1" id="bar3" style="background:#1a1a2a;"></div>
+          <div class="strength-bar flex-1" id="bar4" style="background:#1a1a2a;"></div>
+        </div>
+        <p id="strength-text" style="font-size:0.7rem;color:#6b7280;margin-top:4px;"></p>
+      </div>
+
+      <div id="error-msg" style="color:#ef4444;font-size:0.8rem;display:none;padding:10px 14px;background:rgba(239,68,68,0.08);border-radius:8px;border:1px solid rgba(239,68,68,0.2);"></div>
+      <div id="success-msg" style="color:#10b981;font-size:0.8rem;display:none;padding:10px 14px;background:rgba(16,185,129,0.08);border-radius:8px;border:1px solid rgba(16,185,129,0.2);"></div>
+
+      <button onclick="register()" id="reg-btn" class="gold-btn" style="margin-top:4px;">Create Account →</button>
+    </div>
+
+    <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:20px 0;"/>
+
+    <div style="text-align:center;">
+      <p style="color:#6b7280;font-size:0.875rem;">Already have an account? <a href="login.html" class="gold-text" style="font-weight:600;text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Login here</a></p>
+    </div>
+  </div>
+</div>
+
+<script>
+  if (localStorage.getItem(Config.TOKEN_KEY)) window.location.href = 'index.html';
+
+  function togglePass() {
+    const inp = document.getElementById('password');
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+  }
+
+  function checkStrength() {
+    const val = document.getElementById('password').value;
+    const bars = ['bar1','bar2','bar3','bar4'];
+    const txt = document.getElementById('strength-text');
+    let score = 0;
+    if (val.length >= 6) score++;
+    if (val.length >= 10) score++;
+    if (/[A-Z]/.test(val) && /[0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+
+    const colors = ['#ef4444','#f97316','#f5c842','#10b981'];
+    const labels = ['Weak','Fair','Good','Strong'];
+    bars.forEach((b, i) => {
+      document.getElementById(b).style.background = i < score ? colors[score-1] : '#1a1a2a';
+    });
+    txt.textContent = val.length > 0 ? labels[score-1] || 'Weak' : '';
+    txt.style.color = colors[score-1] || '#6b7280';
+  }
+
+  async function register() {
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const password = document.getElementById('password').value;
+    const errEl = document.getElementById('error-msg');
+    const sucEl = document.getElementById('success-msg');
+    const btn = document.getElementById('reg-btn');
+
+    errEl.style.display = 'none';
+    sucEl.style.display = 'none';
+
+    if (!name || !email || !phone || !password) {
+      errEl.textContent = 'Please fill all fields.'; errEl.style.display = 'block'; return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errEl.textContent = 'Please enter a valid email.'; errEl.style.display = 'block'; return;
+    }
+    if (!/^\d{10}$/.test(phone)) {
+      errEl.textContent = 'Enter valid 10-digit phone number.'; errEl.style.display = 'block'; return;
+    }
+    if (password.length < 6) {
+      errEl.textContent = 'Password must be at least 6 characters.'; errEl.style.display = 'block'; return;
+    }
+
+    btn.textContent = 'Creating account...';
+    btn.disabled = true;
+
+    try {
+      const res = await fetch(`${Config.API}/customer/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, phone, password })
+      });
+      const data = await res.json();
+
+      if (data.flag) {
+        localStorage.setItem(Config.TOKEN_KEY, data.token);
+        localStorage.setItem(Config.AUTH_KEY, JSON.stringify(data.customer));
+        sucEl.textContent = 'Account created! Redirecting...';
+        sucEl.style.display = 'block';
+        setTimeout(() => {
+          const redirect = new URLSearchParams(window.location.search).get('redirect') || 'index.html';
+          window.location.href = redirect;
+        }, 1200);
+      } else {
+        errEl.textContent = data.message || 'Registration failed.';
+        errEl.style.display = 'block';
+      }
+    } catch(e) {
+      errEl.textContent = 'Connection error. Is server running?';
+      errEl.style.display = 'block';
+    }
+
+    btn.textContent = 'Create Account →';
+    btn.disabled = false;
+  }
+</script>
+</body>
+</html>

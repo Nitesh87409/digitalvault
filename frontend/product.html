@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Product – DigitalVault</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="config.js"></script>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
   <style>
@@ -158,28 +159,30 @@
 </div>
 
 <!-- PAYMENT MODAL -->
-<div id="pay-modal" class="fixed inset-0 z-50 hidden" style="background:rgba(0,0,0,0.8);backdrop-filter:blur(10px);display:none!important">
-  <div class="flex items-center justify-center min-h-screen px-4">
-    <div class="card w-full max-w-md p-8 relative">
-      <button onclick="closePayModal()" class="absolute top-4 right-4 text-gray-500 hover:text-white text-xl">✕</button>
-      <h3 class="text-xl font-bold text-white mb-6">Complete Your Order</h3>
-      <div class="space-y-4">
-        <div>
-          <label class="text-xs text-gray-400 mb-1 block">Full Name *</label>
-          <input id="pay-name" type="text" placeholder="Your name" class="w-full px-4 py-3 rounded-xl text-white text-sm outline-none" style="background:#1a1a2a;border:1px solid rgba(255,255,255,0.1);color:#fff"/>
-        </div>
-        <div>
-          <label class="text-xs text-gray-400 mb-1 block">Email *</label>
-          <input id="pay-email" type="email" placeholder="your@email.com" class="w-full px-4 py-3 rounded-xl text-sm outline-none" style="background:#1a1a2a;border:1px solid rgba(255,255,255,0.1);color:#fff"/>
-        </div>
-        <div>
-          <label class="text-xs text-gray-400 mb-1 block">Phone *</label>
-          <input id="pay-phone" type="tel" placeholder="10-digit number" maxlength="10" class="w-full px-4 py-3 rounded-xl text-sm outline-none" style="background:#1a1a2a;border:1px solid rgba(255,255,255,0.1);color:#fff"/>
-        </div>
-        <div id="pay-error" class="text-red-400 text-xs hidden"></div>
-        <button onclick="initiatePayment()" class="gold-btn w-full py-4 rounded-xl text-base">Pay ₹<span id="pay-amount">0</span> →</button>
-        <p class="text-gray-600 text-xs text-center">🔒 Secured by Razorpay</p>
+<div id="pay-modal" class="fixed inset-0 z-50" style="display:none;background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);">
+  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#12121a;border:1px solid rgba(245,200,66,0.25);border-radius:20px;width:90%;max-width:480px;padding:36px;box-shadow:0 0 60px rgba(245,200,66,0.1);">
+    <div style="position:absolute;top:0;left:0;width:100%;height:3px;background:linear-gradient(90deg,#f5c842,#e0a800);border-radius:20px 20px 0 0;"></div>
+    <button onclick="closePayModal()" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#9ca3af;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;">✕</button>
+    <h3 style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700;color:#fff;margin-bottom:6px;">Complete Your Order</h3>
+    <p style="color:#6b7280;font-size:0.85rem;margin-bottom:24px;">Amount: <span style="color:#f5c842;font-weight:700;">₹<span id="pay-amount">0</span></span></p>
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div>
+        <label style="font-size:0.7rem;color:#9ca3af;display:block;margin-bottom:4px;font-weight:600;">Full Name *</label>
+        <input id="pay-name" type="text" placeholder="Your name" style="width:100%;background:#1a1a2a;border:1px solid rgba(255,255,255,0.08);color:#fff;padding:12px 16px;border-radius:12px;font-size:0.875rem;outline:none;"/>
       </div>
+      <div>
+        <label style="font-size:0.7rem;color:#9ca3af;display:block;margin-bottom:4px;font-weight:600;">Email *</label>
+        <input id="pay-email" type="email" placeholder="your@email.com" style="width:100%;background:#1a1a2a;border:1px solid rgba(255,255,255,0.08);color:#fff;padding:12px 16px;border-radius:12px;font-size:0.875rem;outline:none;"/>
+      </div>
+      <div>
+        <label style="font-size:0.7rem;color:#9ca3af;display:block;margin-bottom:4px;font-weight:600;">Phone *</label>
+        <input id="pay-phone" type="tel" placeholder="10-digit number" maxlength="10" style="width:100%;background:#1a1a2a;border:1px solid rgba(255,255,255,0.08);color:#fff;padding:12px 16px;border-radius:12px;font-size:0.875rem;outline:none;"/>
+      </div>
+      <div id="pay-error" style="color:#ef4444;font-size:0.75rem;display:none;"></div>
+      <button onclick="initiatePayment()" style="background:linear-gradient(135deg,#f5c842,#e0a800);color:#0a0a0f;font-family:'Syne',sans-serif;font-weight:700;padding:16px;border-radius:12px;border:none;cursor:pointer;font-size:1rem;width:100%;">
+        Pay ₹<span id="pay-amount-btn">0</span> →
+      </button>
+      <p style="color:#4b5563;font-size:0.7rem;text-align:center;">🔒 Secured by Razorpay</p>
     </div>
   </div>
 </div>
@@ -188,7 +191,7 @@
 <div id="toast"></div>
 
 <script>
-const API = 'http://localhost:5000';
+const API = Config.API;
 let currentProduct = null;
 
 // Get product ID from URL
@@ -199,7 +202,7 @@ if (!productId) window.location.href = 'index.html';
 
 // Load cart count
 function updateCartCount() {
-  const cart = JSON.parse(localStorage.getItem('dv_cart') || '[]');
+  const cart = JSON.parse(localStorage.getItem(Config.CART_KEY) || '[]');
   const count = cart.reduce((s, i) => s + i.qty, 0);
   const badge = document.getElementById('cart-count');
   if (count > 0) { badge.textContent = count; badge.classList.remove('hidden'); }
@@ -270,8 +273,12 @@ function renderProduct(p) {
 
 // Add to Cart
 function addToCart() {
+  if (!localStorage.getItem(Config.TOKEN_KEY)) {
+    window.location.href = `login.html?redirect=${encodeURIComponent(window.location.href)}`;
+    return;
+  }
   if (!currentProduct) return;
-  const cart = JSON.parse(localStorage.getItem('dv_cart') || '[]');
+  const cart = JSON.parse(localStorage.getItem(Config.CART_KEY) || '[]');
   const existing = cart.find(i => i.id === currentProduct._id);
   if (existing) {
     showToast('Already in cart! 🛒', '#f5c842', '#0a0a0f');
@@ -284,7 +291,7 @@ function addToCart() {
       image: currentProduct.images?.[0] || null,
       qty: 1
     });
-    localStorage.setItem('dv_cart', JSON.stringify(cart));
+    localStorage.setItem(Config.CART_KEY, JSON.stringify(cart));
     updateCartCount();
     showToast('Added to cart! 🎉', '#10b981', '#fff');
   }
@@ -292,13 +299,24 @@ function addToCart() {
 
 // Buy Now
 function buyNow() {
-  const modal = document.getElementById('pay-modal');
-  modal.style.setProperty('display', 'flex', 'important');
-  modal.classList.remove('hidden');
+  if (!localStorage.getItem(Config.TOKEN_KEY)) {
+    window.location.href = `login.html?redirect=${encodeURIComponent(window.location.href)}`;
+    return;
+  }
+  if (!currentProduct) return;
+  const sale = currentProduct.sale_price || 0;
+  document.getElementById('pay-amount').textContent = sale.toLocaleString();
+  // Auto-fill customer data
+  const customer = JSON.parse(localStorage.getItem(Config.AUTH_KEY) || 'null');
+  if (customer) {
+    document.getElementById('pay-name').value = customer.name || '';
+    document.getElementById('pay-email').value = customer.email || '';
+    document.getElementById('pay-phone').value = customer.phone || '';
+  }
+  document.getElementById('pay-modal').style.display = 'block';
 }
 function closePayModal() {
-  const modal = document.getElementById('pay-modal');
-  modal.style.setProperty('display', 'none', 'important');
+  document.getElementById('pay-modal').style.display = 'none';
 }
 
 async function initiatePayment() {
@@ -306,11 +324,11 @@ async function initiatePayment() {
   const email = document.getElementById('pay-email').value.trim();
   const phone = document.getElementById('pay-phone').value.trim();
   const errEl = document.getElementById('pay-error');
+  errEl.style.display = 'none';
 
-  if (!name || !email || !phone) { errEl.textContent = 'Please fill all fields.'; errEl.classList.remove('hidden'); return; }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errEl.textContent = 'Valid email required.'; errEl.classList.remove('hidden'); return; }
-  if (!/^\d{10}$/.test(phone)) { errEl.textContent = 'Valid 10-digit phone required.'; errEl.classList.remove('hidden'); return; }
-  errEl.classList.add('hidden');
+  if (!name || !email || !phone) { errEl.textContent = 'Please fill all fields.'; errEl.style.display = 'block'; return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errEl.textContent = 'Valid email required.'; errEl.style.display = 'block'; return; }
+  if (!/^\d{10}$/.test(phone)) { errEl.textContent = 'Valid 10-digit phone required.'; errEl.style.display = 'block'; return; }
 
   try {
     const res = await fetch(`${API}/order/create`, {

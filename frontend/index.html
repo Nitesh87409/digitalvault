@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>DigitalVault – Premium Digital Products</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="config.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <style>
@@ -117,6 +118,8 @@
         <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
         <span id="nav-cart-count" class="absolute -top-2 -right-2 bg-yellow-400 text-black text-xs font-bold w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
       </a>
+      <!-- Login/Logout -->
+      <div id="nav-auth"></div>
       <button onclick="scrollToPricing()" class="gold-btn px-5 py-2 rounded-full text-sm">Buy Now</button>
     </div>
     <!-- Mobile menu button -->
@@ -451,7 +454,33 @@
 </div>
 
 <script>
-const API = 'http://localhost:5000'; // Change to your server URL
+const API = Config.API;
+
+// Auth functions
+function getCustomer() {
+  return JSON.parse(localStorage.getItem(Config.AUTH_KEY) || 'null');
+}
+function getToken() {
+  return localStorage.getItem(Config.TOKEN_KEY);
+}
+function logout() {
+  localStorage.removeItem(Config.TOKEN_KEY);
+  localStorage.removeItem(Config.AUTH_KEY);
+  window.location.reload();
+}
+function updateNavAuth() {
+  const customer = getCustomer();
+  const el = document.getElementById('nav-auth');
+  if (!el) return;
+  if (customer) {
+    el.innerHTML = `<div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:0.8rem;color:#f5c842;font-weight:600;">Hi, ${customer.name.split(' ')[0]}!</span>
+      <button onclick="logout()" style="font-size:0.75rem;color:#6b7280;background:none;border:none;cursor:pointer;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#6b7280'">Logout</button>
+    </div>`;
+  } else {
+    el.innerHTML = `<a href="login.html" style="font-size:0.875rem;color:#9ca3af;text-decoration:none;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#9ca3af'">Login</a>`;
+  }
+}
 
 // Mobile menu
 function toggleMobileMenu() {
@@ -578,10 +607,21 @@ let selectedProductId = null;
 let selectedProductPrice = null;
 
 function openPaymentModal(product_id, price) {
+  // Login check
+  const customer = getCustomer();
+  if (!customer) {
+    window.location.href = `login.html?redirect=${encodeURIComponent(window.location.href)}`;
+    return;
+  }
+
   selectedProductId = product_id || null;
   selectedProductPrice = price || null;
 
-  // Show correct price in modal
+  // Auto-fill customer data
+  document.getElementById('pay-name').value = customer.name || '';
+  document.getElementById('pay-email').value = customer.email || '';
+  document.getElementById('pay-phone').value = customer.phone || '';
+
   if (price) {
     document.getElementById('modal-price').textContent = Number(price).toLocaleString();
   }
@@ -665,7 +705,7 @@ document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
 // Cart functions
 function updateNavCartCount() {
-  const cart = JSON.parse(localStorage.getItem('dv_cart') || '[]');
+  const cart = JSON.parse(localStorage.getItem(Config.CART_KEY) || '[]');
   const count = cart.reduce((s, i) => s + i.qty, 0);
   const badge = document.getElementById('nav-cart-count');
   if (badge) {
@@ -675,14 +715,15 @@ function updateNavCartCount() {
 }
 
 function addToCartFromIndex(id, name, price, origPrice, image) {
-  const cart = JSON.parse(localStorage.getItem('dv_cart') || '[]');
-  const existing = cart.find(i => i.id === id);
-  if (existing) {
-    showIndexToast('Already in cart! 🛒');
+  if (!getCustomer()) {
+    window.location.href = `login.html?redirect=${encodeURIComponent(window.location.href)}`;
     return;
   }
+  const cart = JSON.parse(localStorage.getItem(Config.CART_KEY) || '[]');
+  const existing = cart.find(i => i.id === id);
+  if (existing) { showIndexToast('Already in cart! 🛒'); return; }
   cart.push({ id, name, price, orig_price: origPrice, image: image || null, qty: 1 });
-  localStorage.setItem('dv_cart', JSON.stringify(cart));
+  localStorage.setItem(Config.CART_KEY, JSON.stringify(cart));
   updateNavCartCount();
   showIndexToast('Added to cart! 🎉');
 }
@@ -700,6 +741,7 @@ startCountdown();
 loadProducts();
 loadStats();
 updateNavCartCount();
+updateNavAuth();
 </script>
 </body>
 </html>

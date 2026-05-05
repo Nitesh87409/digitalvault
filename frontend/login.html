@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login – DigitalVault</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="config.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: #0a0a0f; color: #e8e8f0; min-height: 100vh; display: flex; flex-direction: column; }
+    h1,h2,h3 { font-family: 'Syne', sans-serif; }
+    .gold-text { color: #f5c842; }
+    .gold-btn { background: linear-gradient(135deg,#f5c842,#e0a800); color: #0a0a0f; font-family: 'Syne',sans-serif; font-weight: 700; border: none; cursor: pointer; transition: all 0.3s; width: 100%; padding: 14px; border-radius: 12px; font-size: 1rem; }
+    .gold-btn:hover { box-shadow: 0 0 30px rgba(245,200,66,0.4); }
+    .gold-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .inp { background: #1a1a2a; border: 1px solid rgba(255,255,255,0.08); color: #fff; outline: none; width: 100%; padding: 14px 16px; border-radius: 12px; font-size: 0.9rem; transition: border-color 0.2s; font-family: 'DM Sans', sans-serif; }
+    .inp:focus { border-color: rgba(245,200,66,0.5); }
+    .inp::placeholder { color: #4b5563; }
+    .card { background: #12121a; border: 1px solid rgba(245,200,66,0.15); border-radius: 20px; padding: 36px; width: 100%; max-width: 420px; }
+    .divider { border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 20px 0; }
+    .blob { position: fixed; border-radius: 50%; filter: blur(100px); opacity: 0.08; pointer-events: none; z-index: 0; }
+  </style>
+</head>
+<body>
+
+<div class="blob w-96 h-96 bg-yellow-400" style="top:-100px;left:-100px;"></div>
+<div class="blob w-80 h-80 bg-purple-600" style="bottom:-80px;right:-80px;"></div>
+
+<!-- NAV -->
+<nav style="background:rgba(10,10,15,0.9);border-bottom:1px solid rgba(245,200,66,0.1);backdrop-filter:blur(20px);padding:16px 24px;position:sticky;top:0;z-index:10;">
+  <div style="max-width:1152px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;">
+    <a href="index.html" class="text-xl font-bold gold-text">DigitalVault</a>
+    <a href="index.html" style="color:#6b7280;font-size:0.875rem;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#6b7280'">← Back to Store</a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div style="flex:1;display:flex;align-items:center;justify-content:center;padding:40px 16px;position:relative;z-index:1;">
+  <div class="card">
+    <!-- Header -->
+    <div style="text-align:center;margin-bottom:28px;">
+      <div style="font-size:2.5rem;margin-bottom:12px;">👋</div>
+      <h2 style="font-size:1.6rem;font-weight:700;color:#fff;margin-bottom:6px;">Welcome Back!</h2>
+      <p style="color:#6b7280;font-size:0.875rem;">Login to access your purchases</p>
+    </div>
+
+    <!-- Form -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div>
+        <label style="font-size:0.75rem;color:#9ca3af;display:block;margin-bottom:6px;font-weight:600;">Email Address</label>
+        <input id="email" type="email" class="inp" placeholder="your@email.com" onkeydown="if(event.key==='Enter')login()"/>
+      </div>
+      <div>
+        <label style="font-size:0.75rem;color:#9ca3af;display:block;margin-bottom:6px;font-weight:600;">Password</label>
+        <div style="position:relative;">
+          <input id="password" type="password" class="inp" placeholder="••••••••" style="padding-right:48px;" onkeydown="if(event.key==='Enter')login()"/>
+          <button onclick="togglePass('password','eye1')" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#6b7280;" id="eye1">👁</button>
+        </div>
+      </div>
+
+      <div id="error-msg" style="color:#ef4444;font-size:0.8rem;display:none;padding:10px 14px;background:rgba(239,68,68,0.08);border-radius:8px;border:1px solid rgba(239,68,68,0.2);"></div>
+
+      <button onclick="login()" id="login-btn" class="gold-btn" style="margin-top:4px;">Login →</button>
+    </div>
+
+    <hr class="divider"/>
+
+    <div style="text-align:center;">
+      <p style="color:#6b7280;font-size:0.875rem;">Don't have an account? <a href="register.html" class="gold-text" style="font-weight:600;text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Register here</a></p>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Redirect if already logged in
+  if (localStorage.getItem(Config.TOKEN_KEY)) {
+    const redirect = new URLSearchParams(window.location.search).get('redirect') || 'index.html';
+    window.location.href = redirect;
+  }
+
+  function togglePass(inputId, btnId) {
+    const inp = document.getElementById(inputId);
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+  }
+
+  async function login() {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const errEl = document.getElementById('error-msg');
+    const btn = document.getElementById('login-btn');
+
+    if (!email || !password) {
+      errEl.textContent = 'Please enter email and password.';
+      errEl.style.display = 'block'; return;
+    }
+
+    btn.textContent = 'Logging in...';
+    btn.disabled = true;
+    errEl.style.display = 'none';
+
+    try {
+      const res = await fetch(`${Config.API}/customer/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+
+      if (data.flag) {
+        localStorage.setItem(Config.TOKEN_KEY, data.token);
+        localStorage.setItem(Config.AUTH_KEY, JSON.stringify(data.customer));
+        const redirect = new URLSearchParams(window.location.search).get('redirect') || 'index.html';
+        window.location.href = redirect;
+      } else {
+        errEl.textContent = data.message || 'Login failed.';
+        errEl.style.display = 'block';
+      }
+    } catch(e) {
+      errEl.textContent = 'Connection error. Is server running?';
+      errEl.style.display = 'block';
+    }
+
+    btn.textContent = 'Login →';
+    btn.disabled = false;
+  }
+</script>
+</body>
+</html>

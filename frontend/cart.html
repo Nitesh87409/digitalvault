@@ -6,6 +6,7 @@
   <title>Cart – DigitalVault</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script src="config.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
   <style>
     :root { --gold: #f5c842; --dark: #0a0a0f; --card: #12121a; --border: rgba(245,200,66,0.15); }
@@ -130,14 +131,18 @@
 </div>
 
 <script>
-const API = 'http://localhost:5000';
+const API = Config.API;
 let cartItems = [];
 
+// Login check
+const _customer = JSON.parse(localStorage.getItem(Config.AUTH_KEY) || 'null');
+if (!_customer) window.location.href = `login.html?redirect=cart.html`;
+
 function getCart() {
-  return JSON.parse(localStorage.getItem('dv_cart') || '[]');
+  return JSON.parse(localStorage.getItem(Config.CART_KEY) || '[]');
 }
 function saveCart(cart) {
-  localStorage.setItem('dv_cart', JSON.stringify(cart));
+  localStorage.setItem(Config.CART_KEY, JSON.stringify(cart));
 }
 
 function updateCartCount() {
@@ -216,8 +221,14 @@ function openCheckout() {
   const { subtotal } = calcTotals(getCart());
   document.getElementById('modal-total').textContent = subtotal.toLocaleString();
   document.getElementById('co-pay-amount').textContent = subtotal.toLocaleString();
-  const modal = document.getElementById('checkout-modal');
-  modal.style.display = 'block';
+  // Auto-fill
+  const customer = JSON.parse(localStorage.getItem(Config.AUTH_KEY) || 'null');
+  if (customer) {
+    document.getElementById('co-name').value = customer.name || '';
+    document.getElementById('co-email').value = customer.email || '';
+    document.getElementById('co-phone').value = customer.phone || '';
+  }
+  document.getElementById('checkout-modal').style.display = 'block';
 }
 function closeCheckout() {
   document.getElementById('checkout-modal').style.display = 'none';
@@ -275,7 +286,7 @@ async function processCartPayment() {
           });
           const verData = await verRes.json();
           if (verData.flag) {
-            localStorage.removeItem('dv_cart');
+            localStorage.removeItem(Config.CART_KEY);
             window.location.href = `download.html?token=${verData.download_token}`;
           }
         }
@@ -303,7 +314,7 @@ async function processCartPayment() {
               body: JSON.stringify({ razorpay_response: response, order_id: r.order_id, email })
             });
           }
-          localStorage.removeItem('dv_cart');
+          localStorage.removeItem(Config.CART_KEY);
           window.location.href = `my-orders.html`;
         }
       });
