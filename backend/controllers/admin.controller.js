@@ -26,8 +26,10 @@ const AdminController = {
 
       res.json({ flag: 1, message: 'Login successful', token, admin: { name: admin.name, email: admin.email } });
     } catch (e) {
+      onsole.error("LOGIN ERROR:", e);
       res.json({ flag: 0, message: 'Server error' });
     }
+    
   },
 
   async changePassword(req, res) {

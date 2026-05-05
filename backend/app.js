@@ -33,6 +33,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
+
 // Health check
 // app.get('/', (req, res) => res.json({ status: 'DigitalVault API running ✅', version: '1.0.0' }));
 
