@@ -69,7 +69,7 @@ const CustomerController = {
     }
   },
 
-  // GET /customer/me — verify token
+  // GET /customer/me
   async me(req, res) {
     try {
       const token = req.headers.authorization;
@@ -82,6 +82,67 @@ const CustomerController = {
       res.json({ flag: 1, customer });
     } catch (e) {
       res.json({ flag: 0, message: 'Invalid token' });
+    }
+  },
+
+  // PUT /customer/update — profile update
+  async update(req, res) {
+    try {
+      const token = req.headers.authorization;
+      if (!token) return res.json({ flag: 0, message: 'Unauthorized' });
+
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const { name, phone } = req.body;
+
+      if (!name) return res.json({ flag: 0, message: 'Name is required' });
+
+      const customer = await Customer.findByIdAndUpdate(
+        decoded.id,
+        { name, phone },
+        { new: true }
+      ).select('-password');
+
+      if (!customer) return res.json({ flag: 0, message: 'Customer not found' });
+
+      res.json({
+        flag: 1,
+        message: 'Profile updated successfully',
+        customer: { id: customer._id, name: customer.name, email: customer.email, phone: customer.phone }
+      });
+    } catch (e) {
+      console.error(e.message);
+      res.json({ flag: 0, message: 'Server error' });
+    }
+  },
+
+  // PUT /customer/change-password
+  async changePassword(req, res) {
+    try {
+      const token = req.headers.authorization;
+      if (!token) return res.json({ flag: 0, message: 'Unauthorized' });
+
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const { current_password, new_password } = req.body;
+
+      if (!current_password || !new_password)
+        return res.json({ flag: 0, message: 'All fields required' });
+
+      if (new_password.length < 6)
+        return res.json({ flag: 0, message: 'New password must be at least 6 characters' });
+
+      const customer = await Customer.findById(decoded.id);
+      if (!customer) return res.json({ flag: 0, message: 'Customer not found' });
+
+      const match = await bcrypt.compare(current_password, customer.password);
+      if (!match) return res.json({ flag: 0, message: 'Current password is incorrect' });
+
+      customer.password = await bcrypt.hash(new_password, 12);
+      await customer.save();
+
+      res.json({ flag: 1, message: 'Password changed successfully' });
+    } catch (e) {
+      console.error(e.message);
+      res.json({ flag: 0, message: 'Server error' });
     }
   }
 

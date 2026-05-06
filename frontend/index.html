@@ -473,12 +473,19 @@ function updateNavAuth() {
   const el = document.getElementById('nav-auth');
   if (!el) return;
   if (customer) {
-    el.innerHTML = `<div style="display:flex;align-items:center;gap:8px;">
-      <span style="font-size:0.8rem;color:#f5c842;font-weight:600;">Hi, ${customer.name.split(' ')[0]}!</span>
-      <button onclick="logout()" style="font-size:0.75rem;color:#6b7280;background:none;border:none;cursor:pointer;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#6b7280'">Logout</button>
-    </div>`;
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:0.8rem;color:#f5c842;font-weight:600;">Hi, ${customer.name.split(' ')[0]}!</span>
+        <a href="account.html" style="font-size:0.75rem;color:#9ca3af;text-decoration:none;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);padding:4px 10px;border-radius:8px;" onmouseover="this.style.color='#f5c842';this.style.borderColor='rgba(245,200,66,0.3)'" onmouseout="this.style.color='#9ca3af';this.style.borderColor='rgba(255,255,255,0.1)'">My Account</a>
+        <button onclick="logout()" style="font-size:0.75rem;color:#6b7280;background:none;border:none;cursor:pointer;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#6b7280'">Logout</button>
+      </div>`;
   } else {
-    el.innerHTML = `<a href="login.html" style="font-size:0.875rem;color:#9ca3af;text-decoration:none;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#9ca3af'">Login</a>`;
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;">
+        <a href="login.html" style="font-size:0.875rem;color:#9ca3af;text-decoration:none;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#9ca3af'">Login</a>
+        <span style="color:#374151;">|</span>
+        <a href="register.html" style="font-size:0.875rem;color:#f5c842;text-decoration:none;font-weight:600;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Register</a>
+      </div>`;
   }
 }
 
